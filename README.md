@@ -1,2 +1,2 @@
-# RonMusRNA-Silas
-Silas's personal repository for the RonMusRNA project
+# RonMusRNA
+RNA seq analysis of skeletal muscle from control and AdipoRon treated animals

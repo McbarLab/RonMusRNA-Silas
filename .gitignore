@@ -37,3 +37,21 @@ vignettes/*.pdf
 
 # R Environment Variables
 .Renviron
+
+# Raw sequencing files and related
+*.fastq.gz
+*md5sum.txt
+*.html
+
+# folders to ignore
+*QC/
+*Tier2/
+*expression/
+*DGE/
+*_tier_02/
+
+# subfolders
+*/
+
+# visualizations
+*.pdf
