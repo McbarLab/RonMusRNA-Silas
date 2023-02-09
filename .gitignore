@@ -47,7 +47,6 @@ vignettes/*.pdf
 *QC/
 *Tier2/
 *expression/
-*DGE/
 *_tier_02/
 
 # subfolders
