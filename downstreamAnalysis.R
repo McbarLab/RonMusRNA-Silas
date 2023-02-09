@@ -1,6 +1,12 @@
 # This is Silas's personal version of the analysis
-
 library(tidyverse)
+
+if(!require(org.Mm.eg.db))
+  BiocManager::install("org.Mm.eg.db")
+if(!require(WGCNA))
+  BiocManager::install("WGCNA")
+
+
 library(readxl)
 library(clusterProfiler)
 library(pathfindR)
