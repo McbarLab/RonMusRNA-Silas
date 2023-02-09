@@ -162,12 +162,18 @@ ORA_plot <- function(pathway, title){
   dev.off()
 }
 
+# Write all DGE spreadsheet names into a list
 DGE_list <- list.files(path="./DGE")
 DGE_count <- length(DGE_list)
 
-curatedDGE_s28mo_C_M__s28mo_AR_M <- import_dataset(paste("DGE",DGE_list[12],sep="/"))
-category_plot(curatedDGE_s28mo_C_M__s28mo_AR_M, "s28mo_C_M-s28mo_AR_M")
-volcano_plot(curatedDGE_s28mo_C_M__s28mo_AR_M, "s28mo_C_M-s28mo_AR_M")
-sig_gene_s28mo_C_M__s28mo_AR_M <- sig_gene(curatedDGE_s28mo_C_M__s28mo_AR_M, "s28mo_C_M-s28mo_AR_M")
-allPaths_s28mo_C_M__s28mo_AR_M <- path_generate(curatedDGE_s28mo_C_M__s28mo_AR_M, "s28mo_C_M-s28mo_AR_M")
-ORA_plot(allPaths_s28mo_C_M__s28mo_AR_M, "s28mo_C_M-s28mo_AR_M")
+# Iterate through all files to generate their figures in 1 click
+for(DGE_index in 1:DGE_count){
+  title <- sub(".xlsx*.","",
+               sub(".*edgeRglm_GENE_","",DGE_list[DGE_index]))
+  curatedDGE <- import_dataset(paste("DGE",DGE_list[DGE_index],sep="/"))
+  category_plot(curatedDGE, title)
+  volcano_plot(curatedDGE, title)
+  sig_gene_list <- sig_gene(curatedDGE, title)
+  allPaths <- path_generate(curatedDGE, title)
+  ORA_plot(allPaths, title)
+}
