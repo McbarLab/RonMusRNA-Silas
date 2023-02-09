@@ -49,8 +49,8 @@ vignettes/*.pdf
 *expression/
 *_tier_02/
 
-# subfolders
-*/
-
 # visualizations
 *.pdf
+
+# genes filtered
+*.csv

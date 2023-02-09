@@ -72,7 +72,8 @@ category_plot <- function(curatedDGE, title){
     scale_fill_manual(values = c("black", "#808080", 
                                  "#524fa1", "#fdb913", 
                                  "red", "cyan"))
-  ggsave(paste(title,"transcriptCategories.pdf",sep=" "), 
+  ggsave(path = "./Transcript_Categories",
+         filename = paste(title,"transcriptCategories.pdf",sep=" "), 
          transcriptNumsPlot, 
          height = 4, width = 4)
 }
@@ -102,7 +103,8 @@ volcano_plot <- function(curatedDGE, title){
       caption = '',
       max.overlaps = 100
     )
-  ggsave(paste(title,"Volcano.pdf",sep=" "), 
+  ggsave(path = "./Volcano_Plots",
+         filename = paste(title,"Volcano.pdf",sep=" "), 
          volcanoPlot)
 }
 
@@ -114,7 +116,7 @@ sig_gene <- function(curatedDGE, title){
     # log2(1.5) is about 0.5849, we take 0.58 here
     filter(abs(logFC)>= 0.58)
   
-  write.csv(sigGenes, file = paste(title,"sigGenes.csv",sep=" "))
+  write.csv(sigGenes, file = paste("Significant_Genes/",title,"sigGenes.csv",sep=" "))
   return(sigGenes)
 }
 
@@ -127,7 +129,7 @@ path_generate <- function(geneset, title){
   # Function for enrichKEGG analysis and pathway dataset generation
   # By default, this works on mouse (mmu) only
   allPaths <- enrichKEGG(gene = sameGenesEntrez, organism = "mmu")
-  write.csv(allPaths, file = paste("allPaths_",title,".csv",sep = ""))
+  write.csv(allPaths, file = paste("All_Pathways/","allPaths_",title,".csv",sep = ""))
   
   allPaths <- as.data.frame(allPaths) %>%
     mutate(bkgdSize = 
@@ -146,7 +148,7 @@ path_generate <- function(geneset, title){
 } 
 
 ORA_plot <- function(pathway, title){
-  pdf(paste(title,"KEGG pathways p less than 0.01.pdf",sep=" "))  
+  pdf(paste("ORA_Pathways/",title,"KEGG pathways p less than 0.01.pdf",sep=" "))  
   plot(pathway %>% 
          filter(p.adjust < 1*10^-20) %>% 
          ggplot(aes(x = Enrichment, y = Description, 
@@ -160,9 +162,10 @@ ORA_plot <- function(pathway, title){
   dev.off()
 }
 
-file_list <- list.files(path="./DGE")
-curatedDGE_s28mo_C_M__s28mo_AR_M <- import_dataset(paste("DGE",print(file_list[12]),sep="/"))
-#curatedDGE_s28mo_C_M__s28mo_AR_M <- import_dataset("DGE/edgeRglm_GENE_s28mo_C_M-s28mo_AR_M.xlsx")
+DGE_list <- list.files(path="./DGE")
+DGE_count <- length(DGE_list)
+
+curatedDGE_s28mo_C_M__s28mo_AR_M <- import_dataset(paste("DGE",DGE_list[12],sep="/"))
 category_plot(curatedDGE_s28mo_C_M__s28mo_AR_M, "s28mo_C_M-s28mo_AR_M")
 volcano_plot(curatedDGE_s28mo_C_M__s28mo_AR_M, "s28mo_C_M-s28mo_AR_M")
 sig_gene_s28mo_C_M__s28mo_AR_M <- sig_gene(curatedDGE_s28mo_C_M__s28mo_AR_M, "s28mo_C_M-s28mo_AR_M")
