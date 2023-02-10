@@ -83,7 +83,8 @@ volcano_plot <- function(curatedDGE, title){
     curatedDGE %>% EnhancedVolcano(
       lab = curatedDGE$Symbol,
       x = 'logFC',
-      y = 'FDR', # IMPORTANT: Do NOT put logFDR here
+      # IMPORTANT: Do NOT put logFDR here, it takes negative log by default
+      y = 'FDR', 
       xlab = expression(paste("Log"[2],"(FC)")),
       ylab = expression(paste("-log"[10],"(FDR)")),
       FCcutoff = 1.5,
