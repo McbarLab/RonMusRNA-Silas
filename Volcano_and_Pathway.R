@@ -14,6 +14,7 @@ library(ggplot2)
 library(clusterProfiler)
 library(org.Mm.eg.db)
 library(EnhancedVolcano)
+library(msigdbr)
 
 import_dataset <- function(filename){
   rawDGE <- read_excel(filename)
@@ -121,12 +122,16 @@ sig_gene <- function(curatedDGE, title){
   return(sigGenes)
 }
 
-path_generate <- function(geneset, title){
+ensembl_to_entrez <- function(curatedDGE){
   # Map the EMSEMBL IDs to their ENTREZID
   sameGenesEntrez <- na.exclude(mapIds(org.Mm.eg.db, 
-                                       keys = as.character(geneset$Ensembl),
+                                       keys = as.character(curatedDGE$Ensembl),
                                        keytype = "ENSEMBL", column = "ENTREZID"))
-  
+  return(sameGenesEntrez)
+}
+
+path_generate <- function(curatedDGE, title){
+  sameGenesEntrez <- ensembl_to_entrez(curatedDGE)
   # Function for enrichKEGG analysis and pathway dataset generation
   # By default, this works on mouse (mmu) only
   allPaths <- enrichKEGG(gene = sameGenesEntrez, organism = "mmu")
@@ -161,6 +166,18 @@ ORA_plot <- function(pathway, title){
                                            high = "#dba3b2") + 
          ggtitle(paste(title,"KEGG pathways p < 0.01", sep = " ")))
   dev.off()
+}
+
+GSEA_plot <- function(curatedDGE, title){
+  msig_mar <- msigdbr(species = "Mus musculus",
+                      category = "C2", subcategory = "CP:KEGG")
+  sameGenesEntrez <- ensembl_to_entrez(curatedDGE)
+  entrez_list <- msig_mart %>%
+    dplyr::select(gs_name, entrez_gene) %>%
+    group_by(gs_name) %>%
+    summarise(all.genes = list(unique(entrez_gene))) %>%
+    deframe()
+  # Resume working here
 }
 
 # Write all DGE spreadsheet names into a list
