@@ -14,7 +14,7 @@ library(ggplot2)
 library(clusterProfiler)
 library(org.Mm.eg.db)
 library(EnhancedVolcano)
-library(msigdbr)
+
 
 import_dataset <- function(filename){
   rawDGE <- read_excel(filename)
@@ -122,20 +122,15 @@ sig_gene <- function(curatedDGE, title){
   return(sigGenes)
 }
 
-ensembl_to_entrez <- function(curatedDGE){
-  # Map the EMSEMBL IDs to their ENTREZID
-  sameGenesEntrez <- na.exclude(mapIds(org.Mm.eg.db, 
-                                       keys = as.character(curatedDGE$Ensembl),
-                                       keytype = "ENSEMBL", column = "ENTREZID"))
-  return(sameGenesEntrez)
-}
-
 path_generate <- function(curatedDGE, title){
-  sameGenesEntrez <- ensembl_to_entrez(curatedDGE)
+  # Map the EMSEMBL IDs to their ENTREZID
+  sameGenesEntrez <- mapIds(org.Mm.eg.db, 
+                            keys = as.character(curatedDGE$Ensembl),
+                            keytype = "ENSEMBL", column = "ENTREZID") %>% na.omit()
   # Function for enrichKEGG analysis and pathway dataset generation
   # By default, this works on mouse (mmu) only
   allPaths <- enrichKEGG(gene = sameGenesEntrez, organism = "mmu")
-  write.csv(allPaths, file = paste("All_Pathways/","allPaths_",title,".csv",sep = ""))
+  #write.csv(allPaths, file = paste("All_Pathways/","allPaths_",title,".csv",sep = ""))
   
   allPaths <- as.data.frame(allPaths) %>%
     mutate(bkgdSize = 
@@ -154,9 +149,9 @@ path_generate <- function(curatedDGE, title){
 } 
 
 ORA_plot <- function(pathway, title){
-  pdf(paste("ORA_Pathways/",title,"KEGG pathways p less than 0.01.pdf",sep=" "))  
+  pdf(paste("ORA_Pathways/",title,"enrichKEGG.pdf",sep=" "))  
   plot(pathway %>% 
-         filter(p.adjust < 1*10^-20) %>% 
+         filter(p.adjust < 1*10^-15) %>% 
          ggplot(aes(x = Enrichment, y = Description, 
                     color = p.adjust, size = Count)) + 
          geom_point() + expand_limits(x = 0) + 
@@ -164,20 +159,50 @@ ORA_plot <- function(pathway, title){
               color = "FDR", size = "Count") +
          theme_bw() + scale_color_gradient(low = "#B72668", 
                                            high = "#dba3b2") + 
-         ggtitle(paste(title,"KEGG pathways p < 0.01", sep = " ")))
+         ggtitle(paste(title,"enrichKEGG", sep = " ")))
   dev.off()
 }
 
 GSEA_plot <- function(curatedDGE, title){
-  msig_mar <- msigdbr(species = "Mus musculus",
-                      category = "C2", subcategory = "CP:KEGG")
-  sameGenesEntrez <- ensembl_to_entrez(curatedDGE)
-  entrez_list <- msig_mart %>%
-    dplyr::select(gs_name, entrez_gene) %>%
-    group_by(gs_name) %>%
-    summarise(all.genes = list(unique(entrez_gene))) %>%
-    deframe()
-  # Resume working here
+  GSEA_genes <- curatedDGE$logFC
+  names(GSEA_genes) <- curatedDGE$Ensembl
+  # ENTREZ ids for more accurate result
+  GSEA_id <- bitr(names(GSEA_genes), fromType = "ENSEMBL",
+                  toType = "ENTREZID", OrgDb = org.Mm.eg.db)
+  
+  # Remove duplicated entries
+  dedup_id <- GSEA_id[!duplicated(GSEA_id[c("ENSEMBL")]), ]
+  dedup_id <- dedup_id[!duplicated(dedup_id[c("ENTREZID")]), ]
+  
+  # Extract these deduplicated entries from the original curatedDGE
+  mappedIDs <- curatedDGE[curatedDGE$Ensembl %in% 
+                            dedup_id$ENSEMBL, ]
+  mappedIDs$entrez <- dedup_id$ENTREZID
+  
+  # Further distill the data by removing nulls
+  kegg_genes <- mappedIDs$logFC
+  names(kegg_genes) <- mappedIDs$entrez
+  kegg_genes <- kegg_genes %>% na.omit()
+  kegg_genes <- sort(kegg_genes, decreasing = T)
+  
+  # This is the very step of running GSEA, takes VERY LONG TIME
+  gsea_result <- gseKEGG(geneList = kegg_genes, 
+                         organism = "mmu",
+                         # IMPORTANT: Discuss the GSSize param with Tim!!
+                         minGSSize = 4, 
+                         maxGSSize = 500, 
+                         pvalueCutoff = 0.05, 
+                         pAdjustMethod = "fdr",
+                         keyType = "ncbi-geneid")
+  
+  gsea_dotplot <- dotplot(gsea_result, 
+                          showCategory = 10, 
+                          title = paste(title,"gseaKEGG_top10",sep=" "), 
+                          split = ".sign") + facet_grid(.~.sign)
+  
+  ggsave(path = "./GSEA_Pathways",
+         filename = paste(title,"gseaKEGG_top10.pdf",sep=" "), 
+         gsea_dotplot)
 }
 
 # Write all DGE spreadsheet names into a list
@@ -194,4 +219,5 @@ for(DGE_index in 1:DGE_count){
   sig_gene_list <- sig_gene(curatedDGE, title)
   allPaths <- path_generate(curatedDGE, title)
   ORA_plot(allPaths, title)
+  GSEA_plot(curatedDGE, title)
 }
