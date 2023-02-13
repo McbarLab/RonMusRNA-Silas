@@ -51,6 +51,3 @@ vignettes/*.pdf
 
 # visualizations
 *.pdf
-
-# genes filtered
-*.csv

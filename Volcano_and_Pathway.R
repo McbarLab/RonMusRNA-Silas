@@ -8,7 +8,6 @@ if(!require(org.Mm.eg.db))
 if(!require(EnhancedVolcano))
   BiocManager::install('EnhancedVolcano')
 
-library(readxl)
 library(tidyverse)
 library(ggplot2)
 library(clusterProfiler)
@@ -17,8 +16,8 @@ library(EnhancedVolcano)
 
 
 import_dataset <- function(filename){
-  rawDGE <- read_excel(filename)
-  curatedDGE <- rawDGE[,c(1,2,3,6,7)]
+  rawDGE <- read_csv(filename)
+  curatedDGE <- rawDGE[,c(2,3,4,7,8)]
   colnames(curatedDGE) <- c("Ensembl", "Symbol", "logFC", "pval", "FDR")
   
   # Add a column named direction, to show whether this gene is UP-regulated
@@ -211,7 +210,7 @@ DGE_count <- length(DGE_list)
 
 # Iterate through all files to generate their figures in 1 click
 for(DGE_index in 1:DGE_count){
-  title <- sub(".xlsx*.","",
+  title <- sub(".csv*.","",
                sub(".*edgeRglm_GENE_","",DGE_list[DGE_index]))
   curatedDGE <- import_dataset(paste("DGE",DGE_list[DGE_index],sep="/"))
   category_plot(curatedDGE, title)
