@@ -148,19 +148,22 @@ path_generate <- function(curatedDGE, title){
 } 
 
 ORA_plot <- function(pathway, title){
-  pdf(paste("ORA_Pathways/",title,"enrichKEGG.pdf",sep=" "))  
-  plot(pathway %>% 
-         filter(p.adjust < 1*10^-15) %>% 
-         ggplot(aes(x = Enrichment, y = Description, 
-                    color = p.adjust, size = Count)) + 
-         geom_point() + expand_limits(x = 0) + 
-         labs(x = "Enrichment", y = "KEGG pathway", 
-              color = "FDR", size = "Count") +
-         theme_bw() + scale_color_gradient(low = "#B72668", 
-                                           high = "#dba3b2") + 
-         ggtitle(paste(title,"enrichKEGG", sep = " ")))
-  dev.off()
+  plot_pathway <- pathway %>% 
+    filter(p.adjust < 0.01) %>% 
+    arrange(desc(Count)) %>%
+    slice(1:10) %>%
+    ggplot(aes(x = Enrichment, y = Description, 
+               color = p.adjust, size = Count)) + 
+    geom_point() + expand_limits(x = 0) + 
+    labs(x = "Enrichment", y = "KEGG pathway", 
+         color = "FDR", size = "Count") +
+    theme_bw() + scale_color_gradient(low = "#B72668", 
+                                      high = "#dba3b2") + 
+    ggtitle(paste(title,"enrichKEGG", sep = " "))
+  
+  ggsave(paste("ORA_Pathways/",title,"enrichKEGG.pdf",sep=" "), plot_pathway)
 }
+
 
 GSEA_plot <- function(curatedDGE, title){
   GSEA_genes <- curatedDGE$logFC
@@ -213,10 +216,10 @@ for(DGE_index in 1:DGE_count){
   title <- sub(".csv*.","",
                sub(".*edgeRglm_GENE_","",DGE_list[DGE_index]))
   curatedDGE <- import_dataset(paste("DGE",DGE_list[DGE_index],sep="/"))
-  category_plot(curatedDGE, title)
-  volcano_plot(curatedDGE, title)
-  sig_gene_list <- sig_gene(curatedDGE, title)
+  #category_plot(curatedDGE, title)
+  #volcano_plot(curatedDGE, title)
+  #sig_gene_list <- sig_gene(curatedDGE, title)
   allPaths <- path_generate(curatedDGE, title)
   ORA_plot(allPaths, title)
-  GSEA_plot(curatedDGE, title)
+  #GSEA_plot(curatedDGE, title)
 }
