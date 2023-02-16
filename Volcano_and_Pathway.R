@@ -164,7 +164,6 @@ ORA_plot <- function(pathway, title){
   ggsave(paste("ORA_Pathways/",title,"enrichKEGG.pdf",sep=" "), plot_pathway)
 }
 
-
 GSEA_plot <- function(curatedDGE, title){
   GSEA_genes <- curatedDGE$logFC
   names(GSEA_genes) <- curatedDGE$Ensembl
@@ -217,9 +216,9 @@ for(DGE_index in 1:DGE_count){
                sub(".*edgeRglm_GENE_","",DGE_list[DGE_index]))
   curatedDGE <- import_dataset(paste("DGE",DGE_list[DGE_index],sep="/"))
   #category_plot(curatedDGE, title)
-  #volcano_plot(curatedDGE, title)
+  volcano_plot(curatedDGE, title)
   #sig_gene_list <- sig_gene(curatedDGE, title)
-  allPaths <- path_generate(curatedDGE, title)
-  ORA_plot(allPaths, title)
+  #allPaths <- path_generate(curatedDGE, title)
+  #ORA_plot(allPaths, title)
   #GSEA_plot(curatedDGE, title)
 }
