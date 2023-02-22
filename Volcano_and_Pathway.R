@@ -14,25 +14,6 @@ library(clusterProfiler)
 library(org.Mm.eg.db)
 library(EnhancedVolcano)
 
-# Write all DGE spreadsheet names into a list
-DGE_folder_name <- "Corrected_DGE"
-DGE_list <- list.files(path = paste("./",DGE_folder_name,sep = ""))
-DGE_count <- length(DGE_list)
-
-# Iterate through all files to generate their figures in 1 click
-for(DGE_index in 1:DGE_count){
-  title <- sub(".csv*.","",
-               sub(".*edgeRglm_GENE_","",DGE_list[DGE_index]))
-  curatedDGE <- import_dataset(paste(DGE_folder_name, DGE_list[DGE_index],sep="/"))
-  # category_plot(curatedDGE, title)
-  # volcano_plot(curatedDGE, title)
-  # sig_gene_list <- sig_gene(curatedDGE, title)
-  allPaths <- path_generate(curatedDGE, title)
-  ORA_plot(allPaths, title)
-  # GSEA_plot(curatedDGE, title)
-}
-
-
 import_dataset <- function(filename){
   rawDGE <- read_csv(filename)
   curatedDGE <- rawDGE[,c(2,3,4,7,8)]
@@ -169,7 +150,7 @@ ORA_plot <- function(pathway, title){
   plot_pathway <- pathway %>% 
     filter(p.adjust < 0.01) %>% 
     arrange(desc(Count)) %>%
-    # slice(1:10) %>%
+    slice(1:10) %>%
     ggplot(aes(x = Enrichment, y = Description, 
                color = p.adjust, size = Count)) + 
     geom_point() + expand_limits(x = 0) + 
@@ -222,4 +203,22 @@ GSEA_plot <- function(curatedDGE, title){
   ggsave(path = "./GSEA_Pathways",
          filename = paste(title,"gseaKEGG_top10.pdf",sep=" "), 
          gsea_dotplot)
+}
+
+# Write all DGE spreadsheet names into a list
+DGE_folder_name <- "Corrected_DGE"
+DGE_list <- list.files(path = paste("./",DGE_folder_name,sep = ""))
+DGE_count <- length(DGE_list)
+
+# Iterate through all files to generate their figures in 1 click
+for(DGE_index in 1:DGE_count){
+  title <- sub(".csv*.","",
+               sub(".*edgeRglm_GENE_","",DGE_list[DGE_index]))
+  curatedDGE <- import_dataset(paste(DGE_folder_name, DGE_list[DGE_index],sep="/"))
+  category_plot(curatedDGE, title)
+  volcano_plot(curatedDGE, title)
+  sig_gene_list <- sig_gene(curatedDGE, title)
+  allPaths <- path_generate(curatedDGE, title)
+  ORA_plot(allPaths, title)
+  GSEA_plot(curatedDGE, title)
 }
