@@ -195,6 +195,9 @@ GSEA_plot <- function(curatedDGE, title){
                          pAdjustMethod = "fdr",
                          keyType = "ncbi-geneid")
   
+  # Output all pathways as text into a csv file
+  write.csv(gsea_result@result, file = paste("GSEA_Pathway_csv/", title," gseaKEGG_top10.csv",sep=""))
+  
   gsea_dotplot <- dotplot(gsea_result, 
                           showCategory = 10, 
                           title = paste(title,"gseaKEGG_top10",sep=" "), 
