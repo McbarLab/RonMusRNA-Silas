@@ -12,12 +12,7 @@ csv_files <- list.files("./DGE", pattern = "*.csv", full.names = TRUE)
 # Loop over each csv file in the list and apply the code
 for (csv_file in csv_files) {
   # Read in the csv file
-  data <- read_csv(csv_file, col_types = cols(
-    logFC = col_double(),
-    logCPM = col_double(),
-    LR = col_double(),
-    PValue = col_double(),
-    FDR = col_double()))
+  data <- read_csv(csv_file)
 
     
   # Mutate logFC and direction
