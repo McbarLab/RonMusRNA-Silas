@@ -2,9 +2,8 @@
 library(readr)
 library(tools)
 library(dplyr)
+library(Rmpfr)
 
-# set number of digits
-options(digits = 22)
 
 # Get a list of all csv files in the directory
 csv_files <- list.files("./DGE", pattern = "*.csv", full.names = TRUE)
@@ -12,12 +11,16 @@ csv_files <- list.files("./DGE", pattern = "*.csv", full.names = TRUE)
 # Loop over each csv file in the list and apply the code
 for (csv_file in csv_files) {
   # Read in the csv file
-  data <- read_csv(csv_file)
-
+  data <- read_csv(csv_file, col_types = cols(.default = "c"))
     
   # Mutate logFC and direction
     colnames(data) <- c("ID","Ensembl", "Symbol", "logFC", "logCPM", "LR", "PValue", "FDR", "Status", "Description")
-    data$logFC = -1*data$logFC 
+    data <- data %>% 
+      mutate(logFC = case_when(
+        startsWith(logFC, "-") ~ substr(logFC, 2, nchar(logFC)),
+        !startsWith(logFC, "-") ~ paste0("-", logFC)
+      ))
+    
     data$Status = case_when(data$Status == "UP" ~ "DOWN",
                             data$Status == "DOWN" ~ "UP")
     
@@ -44,7 +47,7 @@ for (csv_file in csv_files) {
     
   # Change the header names
   colnames(data) <- c("","Ensembl", "Symbol", col4, col5, col6, col7, col8, col9, "Description")
-
+  
   # Save the data as a csv file with the new name
   write_csv(data, paste("Corrected_DGE/", new_name, sep = ""))
 }

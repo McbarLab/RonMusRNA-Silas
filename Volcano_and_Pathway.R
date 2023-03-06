@@ -1,5 +1,7 @@
 # This analysis is coded by Di "Silas" Kuang
 # Email: dkuang5@wisc.edu
+# RStudio version: 2022.07.2 Build 576
+# R version: 4.2.2
 
 if(!require(clusterProfiler))
   BiocManager::install("clusterProfiler")
@@ -188,15 +190,24 @@ GSEA_plot <- function(curatedDGE, title){
   # This is the very step of running GSEA, takes VERY LONG TIME
   gsea_result <- gseKEGG(geneList = kegg_genes, 
                          organism = "mmu",
-                         # IMPORTANT: Discuss the GSSize param with Tim!!
                          minGSSize = 4, 
                          maxGSSize = 500, 
                          pvalueCutoff = 0.05, 
                          pAdjustMethod = "fdr",
                          keyType = "ncbi-geneid")
-  
+
   # Output all pathways as text into a csv file
-  write.csv(gsea_result@result, file = paste("GSEA_Pathway_csv/", title," gseaKEGG_top10.csv",sep=""))
+  # Convert numerical IDs into gene symbols
+  # Split core_enrichment column by "/"
+  gene_ids <- strsplit(as.character(gsea_result$core_enrichment), "/")
+  # Map each gene ID to its corresponding gene symbol
+  symbol_list <- lapply(gene_ids, function(ids) {
+    symbols <- mapIds(org.Mm.eg.db, keys = ids, keytype = "ENTREZID", column = "SYMBOL")
+    # Join symbols with "/" to reconstruct the original string format
+    paste(symbols, collapse = "/")
+  })
+  gsea_result$core_enrichment_symbol <- unlist(symbol_list)
+  write.csv(gsea_result, file = paste("GSEA_Pathway_csv/", title," gseaKEGG_top10.csv",sep=""))
   
   gsea_dotplot <- dotplot(gsea_result, 
                           showCategory = 10, 
