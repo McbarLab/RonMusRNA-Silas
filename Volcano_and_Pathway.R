@@ -2,6 +2,7 @@
 # Email: dkuang5@wisc.edu
 # RStudio version: 2022.07.2 Build 576
 # R version: 4.2.2
+# IMPORTANT: Restart R before running this script, if you have used any other script in this repo
 
 if(!require(clusterProfiler))
   BiocManager::install("clusterProfiler")
@@ -15,6 +16,7 @@ library(ggplot2)
 library(clusterProfiler)
 library(org.Mm.eg.db)
 library(EnhancedVolcano)
+library(AnnotationDbi)
 
 import_dataset <- function(filename){
   rawDGE <- read_csv(filename)
@@ -197,17 +199,9 @@ GSEA_plot <- function(curatedDGE, title){
                          keyType = "ncbi-geneid")
 
   # Output all pathways as text into a csv file
-  # Convert numerical IDs into gene symbols
-  # Split core_enrichment column by "/"
-  gene_ids <- strsplit(as.character(gsea_result$core_enrichment), "/")
-  # Map each gene ID to its corresponding gene symbol
-  symbol_list <- lapply(gene_ids, function(ids) {
-    symbols <- mapIds(org.Mm.eg.db, keys = ids, keytype = "ENTREZID", column = "SYMBOL")
-    # Join symbols with "/" to reconstruct the original string format
-    paste(symbols, collapse = "/")
-  })
-  gsea_result$core_enrichment_symbol <- unlist(symbol_list)
-  write.csv(gsea_result, file = paste("GSEA_Pathway_csv/", title," gseaKEGG_top10.csv",sep=""))
+  write.csv(gsea_result@result,
+            file = paste("GSEA_Pathway_csv/", title," gseaKEGG_top10.csv",sep=""),
+            row.names = FALSE)
   
   gsea_dotplot <- dotplot(gsea_result, 
                           showCategory = 10, 
