@@ -28,6 +28,7 @@ library(biomaRt)
 
 import_dataset <- function(filename){
   rawDGE <- read_csv(filename)
+  # The following line is for Mark Berres dataset
   curatedDGE <- rawDGE[,c(2,3,4,7,8)]
   colnames(curatedDGE) <- c("Ensembl", "Symbol", "logFC", "pval", "FDR")
   
