@@ -4,12 +4,19 @@
 # R version: 4.2.2
 # IMPORTANT: Restart R before running this script, if you have used any other script in this repo
 
-if(!require(clusterProfiler))
+if (!require("BiocManager", quietly = TRUE))
+  install.packages("BiocManager")
+if(!require("clusterProfiler", quietly = TRUE))
   BiocManager::install("clusterProfiler")
-if(!require(org.Mm.eg.db))
+if(!require("org.Mm.eg.db", quietly = TRUE))
   BiocManager::install("org.Mm.eg.db")
-if(!require(EnhancedVolcano))
+if(!require("EnhancedVolcano", quietly = TRUE))
   BiocManager::install('EnhancedVolcano')
+if (!require("biomaRt", quietly = TRUE))
+  BiocManager::install("biomaRt")
+
+# Set the timeout limit for useMart()
+Sys.setenv(timeout = Inf)
 
 library(tidyverse)
 library(ggplot2)
@@ -17,6 +24,7 @@ library(clusterProfiler)
 library(org.Mm.eg.db)
 library(EnhancedVolcano)
 library(AnnotationDbi)
+library(biomaRt)
 
 import_dataset <- function(filename){
   rawDGE <- read_csv(filename)
@@ -199,6 +207,31 @@ GSEA_plot <- function(curatedDGE, title){
                          keyType = "ncbi-geneid")
 
   # Output all pathways as text into a csv file
+  # Translate the Entrez IDs into gene symbols for easier interpretation
+  
+  # Connect to the Ensembl biomart database
+  ensembl_mart = useMart("ensembl", dataset = "mmusculus_gene_ensembl")
+  
+  # Get the gene symbols and add them to gsea_result@result
+  for (i in seq_along(gsea_result@result$core_enrichment)) {
+    input_string = gsea_result@result$core_enrichment[i]
+    input_ids = strsplit(input_string, "/")[[1]]
+    output_ids = "mgi_symbol"
+    
+    # Get the gene symbols
+    gsea_genes = getBM(attributes = c(output_ids), 
+                       filters = c("entrezgene_id"), 
+                       values = input_ids, 
+                       mart = ensembl_mart)
+    
+    # Collapse the gene symbols into a single string separated by backslashes
+    gene_string = paste(gsea_genes$mgi_symbol, collapse = "/")
+    
+    # Assign the gene symbol to the corresponding row of gsea_result@result
+    gsea_result@result[i, "gene_symbol"] <- gene_string
+  }
+  
+  # Write the dataframe into an external csv file
   write.csv(gsea_result@result,
             file = paste("GSEA_Pathway_csv/", title," gseaKEGG_top10.csv",sep=""),
             row.names = FALSE)
