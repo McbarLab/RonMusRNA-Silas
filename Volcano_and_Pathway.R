@@ -15,9 +15,6 @@ if(!require("EnhancedVolcano", quietly = TRUE))
 if (!require("biomaRt", quietly = TRUE))
   BiocManager::install("biomaRt")
 
-# Set the timeout limit for useMart()
-Sys.setenv(timeout = Inf)
-
 library(tidyverse)
 library(ggplot2)
 library(clusterProfiler)
@@ -29,7 +26,7 @@ library(biomaRt)
 import_dataset <- function(filename){
   rawDGE <- read_csv(filename)
   # The following line is for Mark Berres dataset
-  curatedDGE <- rawDGE[,c(2,3,4,7,8)]
+  curatedDGE <- rawDGE[,c(2,3,4,7,8)] %>% na.omit()
   colnames(curatedDGE) <- c("Ensembl", "Symbol", "logFC", "pval", "FDR")
   
   # Add a column named direction, to show whether this gene is UP-regulated
@@ -178,18 +175,22 @@ ORA_plot <- function(pathway, title){
 
 GSEA_plot <- function(curatedDGE, title){
   GSEA_genes <- curatedDGE$logFC
-  names(GSEA_genes) <- curatedDGE$Ensembl
+  # GSEA can take in both Ensembl or Symbol
+  names(GSEA_genes) <- curatedDGE$Symbol
   # ENTREZ ids for more accurate result
-  GSEA_id <- bitr(names(GSEA_genes), fromType = "ENSEMBL",
+  GSEA_id <- bitr(names(GSEA_genes), fromType = "SYMBOL",
                   toType = "ENTREZID", OrgDb = org.Mm.eg.db)
   
   # Remove duplicated entries
-  dedup_id <- GSEA_id[!duplicated(GSEA_id[c("ENSEMBL")]), ]
+  dedup_id <- GSEA_id[!duplicated(GSEA_id[c("SYMBOL")]), ]
   dedup_id <- dedup_id[!duplicated(dedup_id[c("ENTREZID")]), ]
   
+  # Remove genes that have more than 1 rows
+  # Note: This removes ALL rows for those genes from the dataset
   # Extract these deduplicated entries from the original curatedDGE
-  mappedIDs <- curatedDGE[curatedDGE$Ensembl %in% 
-                            dedup_id$ENSEMBL, ]
+  mappedIDs <- curatedDGE %>% 
+    filter(!duplicated(Symbol)) %>% 
+    filter(Symbol %in% dedup_id$SYMBOL)
   mappedIDs$entrez <- dedup_id$ENTREZID
   
   # Further distill the data by removing nulls
@@ -198,6 +199,9 @@ GSEA_plot <- function(curatedDGE, title){
   kegg_genes <- kegg_genes %>% na.omit()
   kegg_genes <- sort(kegg_genes, decreasing = T)
   
+  # Set the timeout limit for gseKEGG() and useMart()
+  options(timeout = Inf)
+  
   # This is the very step of running GSEA, takes VERY LONG TIME
   gsea_result <- gseKEGG(geneList = kegg_genes, 
                          organism = "mmu",
@@ -205,7 +209,8 @@ GSEA_plot <- function(curatedDGE, title){
                          maxGSSize = 500, 
                          pvalueCutoff = 0.05, 
                          pAdjustMethod = "fdr",
-                         keyType = "ncbi-geneid")
+                         keyType = "ncbi-geneid",
+                         verbose = FALSE)
 
   # Output all pathways as text into a csv file
   # Translate the Entrez IDs into gene symbols for easier interpretation
@@ -257,10 +262,10 @@ for(DGE_index in 1:DGE_count){
   title <- sub(".csv*.","",
                sub(".*edgeRglm_GENE_","",DGE_list[DGE_index]))
   curatedDGE <- import_dataset(paste(DGE_folder_name, DGE_list[DGE_index],sep="/"))
-  category_plot(curatedDGE, title)
-  volcano_plot(curatedDGE, title)
-  sig_gene_list <- sig_gene(curatedDGE, title)
-  allPaths <- path_generate(curatedDGE, title)
-  ORA_plot(allPaths, title)
+  # category_plot(curatedDGE, title)
+  # volcano_plot(curatedDGE, title)
+  # sig_gene_list <- sig_gene(curatedDGE, title)
+  # allPaths <- path_generate(curatedDGE, title)
+  # ORA_plot(allPaths, title)
   GSEA_plot(curatedDGE, title)
 }
