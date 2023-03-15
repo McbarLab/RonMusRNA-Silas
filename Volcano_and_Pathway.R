@@ -264,10 +264,10 @@ for(DGE_index in 1:DGE_count){
   title <- sub(".csv*.","",
                sub(".*edgeRglm_GENE_","",DGE_list[DGE_index]))
   curatedDGE <- import_dataset(paste(DGE_folder_name, DGE_list[DGE_index],sep="/"))
-  # category_plot(curatedDGE, title)
-  # volcano_plot(curatedDGE, title)
-  # sig_gene_list <- sig_gene(curatedDGE, title)
-  # allPaths <- path_generate(curatedDGE, title)
-  # ORA_plot(allPaths, title)
+  category_plot(curatedDGE, title)
+  volcano_plot(curatedDGE, title)
+  sig_gene_list <- sig_gene(curatedDGE, title)
+  allPaths <- path_generate(curatedDGE, title)
+  ORA_plot(allPaths, title)
   GSEA_plot(curatedDGE, title)
 }

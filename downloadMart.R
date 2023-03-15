@@ -5,6 +5,8 @@
 # RStudio version: 2022.07.2 Build 576
 # R version: 4.2.2
 
+if (!require("BiocManager", quietly = TRUE))
+  install.packages("BiocManager")
 if (!require("biomaRt", quietly = TRUE))
   BiocManager::install("biomaRt")
 
