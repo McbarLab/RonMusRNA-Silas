@@ -5,6 +5,9 @@
 # RStudio version: 2022.07.2 Build 576
 # R version: 4.2.2
 
+if (!require("biomaRt", quietly = TRUE))
+  BiocManager::install("biomaRt")
+
 library(biomaRt)
 
 # Connect to the Ensembl biomart database
