@@ -4,7 +4,7 @@
 # R version: 4.2.2
 # IMPORTANT: Restart R before running this script, if you have used any other script in this repo
 
-if (!require("BiocManager", quietly = TRUE))
+if(!require("BiocManager", quietly = TRUE))
   install.packages("BiocManager")
 if(!require("clusterProfiler", quietly = TRUE))
   BiocManager::install("clusterProfiler")
@@ -12,7 +12,7 @@ if(!require("org.Mm.eg.db", quietly = TRUE))
   BiocManager::install("org.Mm.eg.db")
 if(!require("EnhancedVolcano", quietly = TRUE))
   BiocManager::install('EnhancedVolcano')
-if (!require("biomaRt", quietly = TRUE))
+if(!require("biomaRt", quietly = TRUE))
   BiocManager::install("biomaRt")
 
 library(tidyverse)
