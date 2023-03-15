@@ -5,6 +5,10 @@
 # Session Data files
 .RData
 
+# Do not delete the local database
+!./
+./mmusculus_gene_ensembl.RData
+
 # User-specific files
 .Ruserdata
 

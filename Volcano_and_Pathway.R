@@ -23,6 +23,10 @@ library(EnhancedVolcano)
 library(AnnotationDbi)
 library(biomaRt)
 
+
+# Local database is used to ensure pathway does not change due to updates
+emsembl_mart <- load("mmusculus_gene_ensembl.RData")
+
 import_dataset <- function(filename){
   rawDGE <- read_csv(filename)
   # The following line is for Mark Berres dataset
@@ -210,13 +214,10 @@ GSEA_plot <- function(curatedDGE, title){
                          pvalueCutoff = 0.05, 
                          pAdjustMethod = "fdr",
                          keyType = "ncbi-geneid",
-                         verbose = FALSE)
+                         verbose = TRUE)
 
   # Output all pathways as text into a csv file
   # Translate the Entrez IDs into gene symbols for easier interpretation
-  
-  # Connect to the Ensembl biomart database
-  ensembl_mart = useMart("ensembl", dataset = "mmusculus_gene_ensembl")
   
   # Get the gene symbols and add them to gsea_result@result
   for (i in seq_along(gsea_result@result$core_enrichment)) {
@@ -228,7 +229,8 @@ GSEA_plot <- function(curatedDGE, title){
     gsea_genes = getBM(attributes = c(output_ids), 
                        filters = c("entrezgene_id"), 
                        values = input_ids, 
-                       mart = ensembl_mart)
+                       mart = ensembl_mart,
+                       )
     
     # Collapse the gene symbols into a single string separated by backslashes
     gene_string = paste(gsea_genes$mgi_symbol, collapse = "/")
