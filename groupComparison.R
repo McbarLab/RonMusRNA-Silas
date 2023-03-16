@@ -30,7 +30,9 @@ get_genes <- function(pathway_id){
   return(genes)
 }
 
-
+group_compare <- function(df1, df2){
+  
+}
 
 mmu_dict <- pathway_dict("mmu")
 ribosome_genes <- get_genes(

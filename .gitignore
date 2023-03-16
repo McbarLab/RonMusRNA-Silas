@@ -62,6 +62,8 @@ vignettes/*.pdf
 DGE/*.csv
 !Corrected_DGE/
 Corrected_DGE/*.csv
+!Joe_DGE/
+Joe_DGE/*.csv
 
 # Ignore benchmark script
 Benchmark.R

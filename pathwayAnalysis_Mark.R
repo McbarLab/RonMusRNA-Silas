@@ -180,21 +180,21 @@ ORA_plot <- function(pathway, title){
 GSEA_plot <- function(curatedDGE, title){
   GSEA_genes <- curatedDGE$logFC
   # GSEA can take in both Ensembl or Symbol
-  names(GSEA_genes) <- curatedDGE$Symbol
+  names(GSEA_genes) <- curatedDGE$Ensembl
   # ENTREZ ids for more accurate result
-  GSEA_id <- bitr(names(GSEA_genes), fromType = "SYMBOL",
+  GSEA_id <- bitr(names(GSEA_genes), fromType = "ENSEMBL",
                   toType = "ENTREZID", OrgDb = org.Mm.eg.db)
   
   # Remove duplicated entries
-  dedup_id <- GSEA_id[!duplicated(GSEA_id[c("SYMBOL")]), ]
+  dedup_id <- GSEA_id[!duplicated(GSEA_id[c("ENSEMBL")]), ]
   dedup_id <- dedup_id[!duplicated(dedup_id[c("ENTREZID")]), ]
   
   # Remove genes that have more than 1 rows
   # Note: This removes ALL rows for those genes from the dataset
   # Extract these deduplicated entries from the original curatedDGE
   mappedIDs <- curatedDGE %>% 
-    filter(!duplicated(Symbol)) %>% 
-    filter(Symbol %in% dedup_id$SYMBOL)
+    filter(!duplicated(Ensembl)) %>% 
+    filter(Ensembl %in% dedup_id$ENSEMBL)
   mappedIDs$entrez <- dedup_id$ENTREZID
   
   # Further distill the data by removing nulls
@@ -245,7 +245,7 @@ GSEA_plot <- function(curatedDGE, title){
             row.names = FALSE)
   
   gsea_dotplot <- dotplot(gsea_result, 
-                          showCategory = 10, 
+                          showCategory = 10,
                           title = paste(title,"gseaKEGG_top10",sep=" "), 
                           split = ".sign") + facet_grid(.~.sign)
   
