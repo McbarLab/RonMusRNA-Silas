@@ -1,6 +1,6 @@
 # This analysis is coded by Di "Silas" Kuang
 # Email: dkuang5@wisc.edu
-# RStudio version: 2022.07.2 Build 576
+# RStudio version: 2022.12.0 Build 353
 # R version: 4.2.2
 
 if(!require("BiocManager", quietly = TRUE))
@@ -30,12 +30,38 @@ get_genes <- function(pathway_id){
   return(genes)
 }
 
-group_compare <- function(df1, df2){
-  
+read_enrichment <- function(filename){
+  dataset <- read_csv(filename, col_names = TRUE)
+}
+
+enrichment_compare <- function(df1, df2, df1_name, df2_name){
+  merged_pathway <- merge(df1[,c("ID", "Description", "enrichmentScore", "gene_symbol")],
+                          df2[,c("ID", "Description", "enrichmentScore", "gene_symbol")],
+                          by = c("ID", "Description"),
+                          suffixes = c(paste0("_",df1_name),
+                                       paste0("_",df2_name)))
+  write.csv(merged_pathway,
+            file = paste("Enrichment_Comparison/",
+                         title," enrichment_comparison.csv",sep=""))
 }
 
 mmu_dict <- pathway_dict("mmu")
 ribosome_genes <- get_genes(
   mmu_dict["Ribosome - Mus musculus (house mouse)"])
 
+enrichment_folder_name <- "GSEA_Pathway_csv"
+comparison_list <- c("01_mo06_AR_F_vs_mo06_C_F",
+                  "02_mo06_AR_M_vs_mo06_C_M")
+pair_count <- length(comparison_list) / 2
 
+for(pair_index in pair_count){
+  df1_name <- comparison_list[2*pair_index - 1]
+  df2_name <- comparison_list[2*pair_index]
+  df1 <- read_enrichment(paste0(enrichment_folder_name, "/",
+                                df1_name, " gseaKEGG_top10.csv"))
+  df2 <- read_enrichment(paste0(enrichment_folder_name, "/",
+                                df2_name, " gseaKEGG_top10.csv"))
+  
+  title <- paste0(df1_name,"_vs_", df2_name)
+  enrichment_compare(df1, df2, df1_name, df2_name)
+}
