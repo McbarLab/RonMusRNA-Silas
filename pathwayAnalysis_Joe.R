@@ -216,42 +216,50 @@ GSEA_plot <- function(curatedDGE, title){
                          keyType = "ncbi-geneid",
                          verbose = TRUE)
 
-  # Output all pathways as text into a csv file
-  # Translate the Entrez IDs into gene symbols for easier interpretation
-  
-  # Get the gene symbols and add them to gsea_result@result
-  for (i in seq_along(gsea_result@result$core_enrichment)) {
-    input_string = gsea_result@result$core_enrichment[i]
-    input_ids = strsplit(input_string, "/")[[1]]
-    output_ids = "mgi_symbol"
+  if(is.null(gsea_result@result$core_enrichment) == TRUE){
+    pdf(paste("./GSEA_Pathways/", title,"NO_ENRICHMENT.pdf",sep=" "))
+    cat("There are NO GENE ENRICHMENT in this dataset!!")
+    sink()
+    dev.off()
+  }else{
+    # Output all pathways as text into a csv file
+    # Translate the Entrez IDs into gene symbols for easier interpretation
     
-    # Get the gene symbols
-    gsea_genes = getBM(attributes = c(output_ids), 
-                       filters = c("entrezgene_id"), 
-                       values = input_ids, 
-                       mart = ensembl_mart,
-                       )
+    # Get the gene symbols and add them to gsea_result@result
+    for (i in seq_along(gsea_result@result$core_enrichment)) {
+      input_string = gsea_result@result$core_enrichment[i]
+      input_ids = strsplit(input_string, "/")[[1]]
+      output_ids = "mgi_symbol"
+      
+      # Get the gene symbols
+      gsea_genes = getBM(attributes = c(output_ids), 
+                         filters = c("entrezgene_id"), 
+                         values = input_ids, 
+                         mart = ensembl_mart,
+      )
+      
+      # Collapse the gene symbols into a single string separated by backslashes
+      gene_string = paste(gsea_genes$mgi_symbol, collapse = "/")
+      
+      # Assign the gene symbol to the corresponding row of gsea_result@result
+      gsea_result@result[i, "gene_symbol"] <- gene_string
+    }
     
-    # Collapse the gene symbols into a single string separated by backslashes
-    gene_string = paste(gsea_genes$mgi_symbol, collapse = "/")
+    # Write the dataframe into an external csv file
+    write.csv(gsea_result@result,
+              file = paste("GSEA_Pathway_csv/", title," gseaKEGG_top10.csv",sep=""),
+              row.names = FALSE)
     
-    # Assign the gene symbol to the corresponding row of gsea_result@result
-    gsea_result@result[i, "gene_symbol"] <- gene_string
+    
+    gsea_dotplot <- dotplot(gsea_result, 
+                            showCategory = 10,
+                            title = paste(title,"gseaKEGG_top10",sep=" "), 
+                            split = ".sign") + facet_grid(.~.sign)
+    
+    ggsave(path = "./GSEA_Pathways",
+           filename = paste(title,"gseaKEGG_top10.pdf",sep=" "), 
+           gsea_dotplot)
   }
-  
-  # Write the dataframe into an external csv file
-  write.csv(gsea_result@result,
-            file = paste("GSEA_Pathway_csv/", title," gseaKEGG_top10.csv",sep=""),
-            row.names = FALSE)
-  
-  gsea_dotplot <- dotplot(gsea_result, 
-                          showCategory = 10,
-                          title = paste(title,"gseaKEGG_top10",sep=" "), 
-                          split = ".sign") + facet_grid(.~.sign)
-  
-  ggsave(path = "./GSEA_Pathways",
-         filename = paste(title,"gseaKEGG_top10.pdf",sep=" "), 
-         gsea_dotplot)
 }
 
 # Write all DGE spreadsheet names into a list
