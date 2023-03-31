@@ -45,8 +45,21 @@ enrichment_compare <- function(df1, df2, df1_name, df2_name){
                          title," enrichment_comparison.csv",sep=""))
 }
 
+heatmap_plot <- function(df1, df2, df1_name, df2_name, genes){
+  groups <- c(df1_name, df2_name)
+  heatmap_data <- expand.grid(X=groups, Y=genes)
+  # Test-phrase, not real data
+  data$count <- runif(440, 0, 6)
+  heatmap_draw <- ggplot(heatmap_data, aes(X, Y, fill=count) +
+    geom_tile() + theme_minimal() +
+    scale_fill_gradient(low="white", high="red")+
+    labs(title = "Heatmap", subtitle = "A simple heatmap using geom_tile()",
+         x ="Group", y ="Genes"))
+  return(heatmap_draw)
+}
+
 mmu_dict <- pathway_dict("mmu")
-ribosome_genes <- get_genes(
+pathway_genes <- get_genes(
   mmu_dict["Ribosome - Mus musculus (house mouse)"])
 
 enrichment_folder_name <- "GSEA_Pathway_csv"
@@ -64,4 +77,5 @@ for(pair_index in pair_count){
   
   title <- paste0(df1_name,"_vs_", df2_name)
   enrichment_compare(df1, df2, df1_name, df2_name)
+  heatmap_plot(df1, df2, df1_name, df2_name, pathway_genes)
 }

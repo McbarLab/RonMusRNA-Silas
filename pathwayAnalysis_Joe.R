@@ -216,12 +216,7 @@ GSEA_plot <- function(curatedDGE, title){
                          keyType = "ncbi-geneid",
                          verbose = TRUE)
 
-  if(is.null(gsea_result@result$core_enrichment) == TRUE){
-    pdf(paste("./GSEA_Pathways/", title,"NO_ENRICHMENT.pdf",sep=" "))
-    cat("There are NO GENE ENRICHMENT in this dataset!!")
-    sink()
-    dev.off()
-  }else{
+  if(is.null(gsea_result@result$core_enrichment) == FALSE){
     # Output all pathways as text into a csv file
     # Translate the Entrez IDs into gene symbols for easier interpretation
     
@@ -247,7 +242,7 @@ GSEA_plot <- function(curatedDGE, title){
     
     # Write the dataframe into an external csv file
     write.csv(gsea_result@result,
-              file = paste("GSEA_Pathway_csv/", title," gseaKEGG_top10.csv",sep=""),
+              file = paste("GSEA_Pathway_csv/", title," gseaKEGG_all.csv",sep=""),
               row.names = FALSE)
     
     
