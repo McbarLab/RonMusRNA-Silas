@@ -63,19 +63,20 @@ pathway_genes <- get_genes(
   mmu_dict["Ribosome - Mus musculus (house mouse)"])
 
 enrichment_folder_name <- "GSEA_Pathway_csv"
-comparison_list <- c("01_mo06_AR_F_vs_mo06_C_F",
-                  "02_mo06_AR_M_vs_mo06_C_M")
+comparison_list <- c(
+  "01_mo06_AR_F_vs_mo06_C_F","03_mo22_AR_F_vs_mo22_C_F",
+  "03_mo22_AR_F_vs_mo22_C_F","05_mo28_AR_F_vs_mo28_C_F"
+  )
 pair_count <- length(comparison_list) / 2
 
-for(pair_index in pair_count){
+for(pair_index in 1:pair_count){
   df1_name <- comparison_list[2*pair_index - 1]
   df2_name <- comparison_list[2*pair_index]
   df1 <- read_enrichment(paste0(enrichment_folder_name, "/",
-                                df1_name, " gseaKEGG_top10.csv"))
+                                df1_name, " gseaKEGG_all.csv"))
   df2 <- read_enrichment(paste0(enrichment_folder_name, "/",
-                                df2_name, " gseaKEGG_top10.csv"))
+                                df2_name, " gseaKEGG_all.csv"))
   
   title <- paste0(df1_name,"_vs_", df2_name)
   enrichment_compare(df1, df2, df1_name, df2_name)
-  heatmap_plot(df1, df2, df1_name, df2_name, pathway_genes)
 }
