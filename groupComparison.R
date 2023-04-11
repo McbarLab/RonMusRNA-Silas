@@ -64,8 +64,14 @@ pathway_genes <- get_genes(
 
 enrichment_folder_name <- "GSEA_Pathway_csv"
 comparison_list <- c(
+  # Drug effect
   "01_mo06_AR_F_vs_mo06_C_F","03_mo22_AR_F_vs_mo22_C_F",
-  "03_mo22_AR_F_vs_mo22_C_F","05_mo28_AR_F_vs_mo28_C_F"
+  "03_mo22_AR_F_vs_mo22_C_F","05_mo28_AR_F_vs_mo28_C_F",
+  "02_mo06_AR_M_vs_mo06_C_M","04_mo22_AR_M_vs_mo22_C_M",
+  "04_mo22_AR_M_vs_mo22_C_M","06_mo28_AR_M_vs_mo28_C_M",
+  # Age effect
+  "10_mo22_C_M_vs_mo06_C_M","12_mo28_C_M_vs_mo22_C_M",
+  "13_mo22_C_F_vs_mo06_C_F","15_mo28_C_F_vs_mo22_C_F"
   )
 pair_count <- length(comparison_list) / 2
 
@@ -78,5 +84,5 @@ for(pair_index in 1:pair_count){
                                 df2_name, " gseaKEGG_all.csv"))
   
   title <- paste0(df1_name,"_vs_", df2_name)
-  enrichment_compare(df1, df2, df1_name, df2_name)
+  # enrichment_compare(df1, df2, df1_name, df2_name)
 }

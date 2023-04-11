@@ -55,7 +55,7 @@ category_plot <- function(curatedDGE, title){
     tally() %>% 
     mutate(direction = "normal Sig")
   restrictSig <- curatedDGE %>% 
-    filter(FDR <= 0.01) %>% 
+    filter(FDR <= fdrCutOff) %>% 
     tally() %>% 
     mutate(direction = "restrictive Sig")
   
@@ -94,13 +94,15 @@ category_plot <- function(curatedDGE, title){
 volcano_plot <- function(curatedDGE, title){
   volcanoPlot <- 
     curatedDGE %>% EnhancedVolcano(
-      lab = curatedDGE$Symbol,
+      lab = NA,
+      # lab = curatedDGE$Symbol,
       x = 'logFC',
       # IMPORTANT: Do NOT put logFDR here, it takes negative log by default
       y = 'FDR', 
       xlab = expression(paste("Log"[2],"(FC)")),
       ylab = expression(paste("-log"[10],"(FDR)")),
-      FCcutoff = 1.5,
+      pCutoff = fdrCutOff,
+      FCcutoff = logFoldChange,
       cutoffLineType = 'twodash',
       # col = c("#999999", "#ed1c24", "#662d91"),
       # pointSize = 3.0,
@@ -125,10 +127,10 @@ volcano_plot <- function(curatedDGE, title){
 sig_gene <- function(curatedDGE, title){
   # Extract restrictively significant genes
   sigGenes <- curatedDGE[,c("Symbol", "logFC","FDR")] %>% 
-    filter(FDR < 0.01) %>% 
+    filter(FDR < fdrCutOff) %>% 
     # Calculate the non-log fold change and filter out rows with values smaller than 50%
     # log2(1.5) is about 0.5849, we take 0.58 here
-    filter(abs(logFC)>= 0.58)
+    filter(abs(logFC)>= logFoldChange)
   
   write.csv(sigGenes, file = paste("Significant_Genes/",title,"sigGenes.csv",sep=" "))
   return(sigGenes)
@@ -162,7 +164,7 @@ path_generate <- function(curatedDGE, title){
 
 ORA_plot <- function(pathway, title){
   plot_pathway <- pathway %>% 
-    filter(p.adjust < 0.01) %>% 
+    filter(p.adjust < fdrCutOff) %>% 
     arrange(desc(Count)) %>%
     slice(1:10) %>%
     ggplot(aes(x = Enrichment, y = Description, 
@@ -262,6 +264,10 @@ DGE_folder_name <- "Joe_DGE"
 DGE_list <- list.files(path = paste("./",DGE_folder_name,sep = ""))
 DGE_count <- length(DGE_list)
 
+# What is the log2 fold change we need?
+logFoldChange = 0.58496250072
+fdrCutOff = 0.01
+
 # Iterate through all files to generate their figures in 1 click
 for(DGE_index in 1:DGE_count){
   title <- sub(".csv*.","",
@@ -270,7 +276,7 @@ for(DGE_index in 1:DGE_count){
   category_plot(curatedDGE, title)
   volcano_plot(curatedDGE, title)
   sig_gene_list <- sig_gene(curatedDGE, title)
-  allPaths <- path_generate(curatedDGE, title)
-  ORA_plot(allPaths, title)
-  GSEA_plot(curatedDGE, title)
+  #allPaths <- path_generate(curatedDGE, title)
+  #ORA_plot(allPaths, title)
+  #GSEA_plot(curatedDGE, title)
 }
