@@ -265,7 +265,7 @@ DGE_list <- list.files(path = paste("./",DGE_folder_name,sep = ""))
 DGE_count <- length(DGE_list)
 
 # What is the log2 fold change we need?
-logFoldChange = 0.58496250072
+logFoldChange = log2(1.5)
 fdrCutOff = 0.01
 
 # Iterate through all files to generate their figures in 1 click
