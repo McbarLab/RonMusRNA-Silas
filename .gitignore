@@ -59,11 +59,8 @@ vignettes/*.pdf
 # Ignore all csv files except the input
 *.csv
 !DGE/
-DGE/*.csv
 !Corrected_DGE/
-Corrected_DGE/*.csv
 !Joe_DGE/
-Joe_DGE/*.csv
 
 # Ignore benchmark script
 Benchmark.R
