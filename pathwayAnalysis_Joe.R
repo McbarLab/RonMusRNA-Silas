@@ -112,8 +112,11 @@ volcano_plot <- function(curatedDGE, title){
       drawConnectors = TRUE,
       widthConnectors = 0.5,
       colConnectors = 'grey50',
-      # Since dot colors are easy to understand, hide legends
-      legendPosition = 'none',
+      # Put a legend. Good habit :)
+      legendLabels = c("Not Sig", "LogFC", "-logFDR", "LogFC and -logFDR"),
+      legendPosition = 'right',
+      legendLabSize = 7,
+      legendIconSize = 1.7,
       title = paste(title,"Volcano",sep=" "),
       subtitle = '',
       caption = '',
