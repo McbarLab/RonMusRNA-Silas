@@ -42,4 +42,4 @@ fcLim_featureLength <- fcLim$annotation$Length
 sequence_fragmentLength <- rep(151,36)
 
 fcLim_tpm <- counts_to_tpm(fcLim_counts, fcLim_featureLength, sequence_fragmentLength)
-write.csv(fcLim_tpm, "rsem_GENE_tpm.csv")
+write.csv(fcLim_tpm, "rsubread_GENE_tpm.csv")
