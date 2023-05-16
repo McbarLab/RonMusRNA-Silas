@@ -1,100 +1,4 @@
-#Install packages
-install.packages(
-  c(
-    "matrixStats",
-    "Hmisc",
-    "splines",
-    "foreach",
-    "doParallel",
-    "fastcluster",
-    "dynamicTreeCut",
-    "survival"
-  )
-)
-source("http://bioconductor.org/biocLite.R")
-biocLite(c("GO.db", "preprocessCore", "impute"))
 
-# Load the tpm
-source("TPM_Maker.R")
-
-#install WGCNA
-install.packages("BiocManager")
-BiocManager::install("WGCNA")
-
-# 1.a Loading expresssion data
-library(WGCNA)
-options(stringsAsFactors=FALSE)
-RawTPM = read.csv("rsubread_GENE_tpm.csv")
-names(RawTPM)[1] <- "gene"
-dim(RawTPM)
-names(RawTPM)
-datExpr0 = as.data.frame(t(RawTPM[,-c(1)]))
-names(datExpr0) = RawTPM$gene
-rownames(datExpr0) = names(RawTPM)[-c(1)]
-
-# 1.b Checking data for excessive missing values and identification of outlier microarray samples
-## Make sure that the numbers to not contain commas in the thousands position (e.g.- 1,234=NO; 1234=YES)
-gsg = goodSamplesGenes(datExpr0, verbose = 3)
-gsg$allOK
-
-## Remove offending genes and samples from the data
-if (!gsg$allOK)
-{
-  # Optionally, print the gene and sample names that were removed:
-  if (sum(!gsg$goodGenes) > 0)
-    printFlush(paste("Removing genes:", paste(names(datExpr0)[!gsg$goodGenes], collapse = ", ")))
-  
-  if (sum(!gsg$goodSamples) > 0)
-    printFlush(paste("Removing samples:", paste(rownames(datExpr0)[!gsg$goodSamples], collapse = ", ")))
-  
-  # Remove the offending genes and samples from the data:
-  datExpr0 = datExpr0[gsg$goodSamples, gsg$goodGenes]
-}
-
-## Cluster the samples
-sampleTree = hclust(dist(datExpr0), method = "average")
-sizeGrWindow(12, 9)
-par(cex = 0.6)
-par(mar = c(0, 4, 2, 0))
-plot(
-  sampleTree,
-  main = "Sample clustering to detect outliers",
-  sub = "",
-  xlab = "",
-  cex.lab = 1.5,
-  cex.axis = 1.5,
-  cex.main = 2
-)
-
-
-datExpr = datExpr0
-nGenes = ncol(datExpr)
-nSamples = nrow(datExpr)
-
-# 1.c Loading clinical trait data
-traitData = read.csv("Weasley_Biometrics_07March2023.csv")
-dim(traitData)
-names(traitData)
-
-allTraits = traitData[,-c(2:5, 7:11)] #this removes these specific columns
-#allTraits = allTraits[, c(2, 11:36)] #this specifically chooses the columns to squish together
-dim(allTraits)
-names(allTraits)
-
-ALLsamples = rownames(datExpr)
-traitRows = match(ALLsamples, allTraits$ID)
-datTraits = allTraits[traitRows,-1]
-rownames(datTraits) = allTraits[traitRows, 1]
-collectGarbage()
-
-## Visualize how the clinical traits relate to the sample dendrogram
-sampleTree2 = hclust(dist(datExpr), method = "average")
-traitColors = numbers2colors(datTraits, signed = FALSE)
-#traitColors = numbers2colors(as.numeric(datTraits), signed = FALSE)
-plotDendroAndColors(sampleTree2,
-                    traitColors,
-                    groupLabels = names(datTraits),
-                    main = "Sample dendrogram and trait heatmap")
 
 # 2.a Automatic network construction and module detection
 powers = c(c(1:10), seq(from = 12, to = 20, by = 2))
@@ -103,16 +7,14 @@ sizeGrWindow(9, 5)
 par(mfrow = c(1, 2))
 cex1 = 0.9
 plot(
-  sft$fitIndices[, 1],
-  -sign(sft$fitIndices[, 3]) * sft$fitIndices[, 2],
+  sft$fitIndices[, 1],-sign(sft$fitIndices[, 3]) * sft$fitIndices[, 2],
   xlab = "Soft Threshold (power)",
   ylab = "Scale Free Topology Model Fit,signed R^2",
   type = "n",
   main = paste("Scale independence")
 )
 text(
-  sft$fitIndices[, 1],
-  -sign(sft$fitIndices[, 3]) * sft$fitIndices[, 2],
+  sft$fitIndices[, 1],-sign(sft$fitIndices[, 3]) * sft$fitIndices[, 2],
   labels = powers,
   cex = cex1,
   col = "red"
@@ -146,7 +48,7 @@ net = blockwiseModules(
   numericLabels = TRUE,
   pamRespectsDendro = FALSE,
   saveTOMs = TRUE,
-  saveTOMFileBase = "AllSamples_CRvsC_TOM",
+  saveTOMFileBase = "AllSamples_CRvsC_TOM", # Change this title
   verbose = 3
 )
 
@@ -171,7 +73,7 @@ MEs = net$MEs
 geneTree = net$dendrograms[[1]]
 
 save(MEs, moduleLabels, moduleColors, geneTree,
-     file = "AllSamples_All_1828genes_Remove626genes_CRvsC_networkConstruction-auto.RData")
+     file = "AllSamples_networkConstruction-auto.RData")
 
 
 
@@ -197,7 +99,7 @@ textMatrix = paste(signif(moduleTraitCor, 2),
                    sep = "")
 
 dim(textMatrix) = dim(moduleTraitCor)
-par(mar = c(6, 8.5, 3, 3))
+par(mar = c(6, 8.5, 3, 3)) # Discuss on how parameters were determined
 
 # Display the correlation values within a heatmap plot
 labeledHeatmap(
@@ -219,10 +121,11 @@ labeledHeatmap(
 ### _________________
 
 # Define variable weight containing the weight column of datTrait
-## triglycerides Si
-triglycerides = as.data.frame(datTraits$Triglycerides_mgPERdl)
+## Fasting Glucose End
+glu_end = as.data.frame(datTraits$Fasting.Glucose.End)
 
-names(triglycerides) = "triglycerides"
+names(glu_end) = "glu_end"
+
 # names (colors) of the modules
 modNames = substring(names(MEs), 3)
 geneModuleMembership = as.data.frame(cor(datExpr, MEs, use = "p"))
@@ -233,14 +136,14 @@ names(geneModuleMembership) = paste("MM", modNames, sep = "")
 
 names(MMPvalue) = paste("p.MM", modNames, sep = "")
 
-geneTraitSignificance = as.data.frame(cor(datExpr, triglycerides, use = "p"))
+geneTraitSignificance = as.data.frame(cor(datExpr, glu_end, use = "p"))
 
 GSPvalue = as.data.frame(corPvalueStudent(as.matrix(geneTraitSignificance), nSamples))
 
-names(geneTraitSignificance) = paste("GS.", names(triglycerides), sep =
+names(geneTraitSignificance) = paste("GS.", names(glu_end), sep =
                                        "")
 
-names(GSPvalue) = paste("p.GS.", names(triglycerides), sep = "")
+names(GSPvalue) = paste("p.GS.", names(glu_end), sep = "")
 
 # 3.c Intramodular analysis: identifying genes with high GS and MM
 module = "orange"
@@ -299,12 +202,12 @@ module = "orange"
                                  ""))
   }
   # Order the genes in the geneInfo variable first by module color, then by geneTraitSignificance
-  geneOrder = order(geneInfo0$moduleColor,-abs(geneInfo0$GS.triglycerides))
+  geneOrder = order(geneInfo0$moduleColor, -abs(geneInfo0$GS.triglycerides))
   
-  geneInfo = geneInfo0[geneOrder,]
+  geneInfo = geneInfo0[geneOrder, ]
   
   ## Remove specific columns to condense data
-  geneInfo_Si = geneInfo[,-c(5:86)] #this removes these specific columns
+  geneInfo_Si = geneInfo[, -c(5:86)] #this removes these specific columns
   dim(geneInfo_Si)
   names(geneInfo_Si)
   
@@ -577,10 +480,13 @@ module = "orange"
   MMyellowGenes <- names(datExpr)[moduleColors == "yellow"]
   MMlightcyan1Genes <- names(datExpr)[moduleColors == "lightcyan1"]
   MMplum1Genes <- names(datExpr)[moduleColors == "plum1"]
-  MMgreenyellowGenes <- names(datExpr)[moduleColors == "greenyellow"]
-  MMdarkmagentaGenes <- names(datExpr)[moduleColors == "darkmagenta"]
+  MMgreenyellowGenes <-
+    names(datExpr)[moduleColors == "greenyellow"]
+  MMdarkmagentaGenes <-
+    names(datExpr)[moduleColors == "darkmagenta"]
   MMpurpleGenes <- names(datExpr)[moduleColors == "purple"]
-  MMfloralwhiteGenes <- names(datExpr)[moduleColors == "floralwhite"]
+  MMfloralwhiteGenes <-
+    names(datExpr)[moduleColors == "floralwhite"]
   MMvioletGenes <- names(datExpr)[moduleColors == "violet"]
   MMdarkslateblueGenes <-
     names(datExpr)[moduleColors == "darkslateblue"]
@@ -595,7 +501,8 @@ module = "orange"
   MMdarkredGenes <- names(datExpr)[moduleColors == "darkred"]
   MMcyanGenes <- names(datExpr)[moduleColors == "cyan"]
   MMredGenes <- names(datExpr)[moduleColors == "red"]
-  MMyellowgreenGenes <- names(datExpr)[moduleColors == "yellowgreen"]
+  MMyellowgreenGenes <-
+    names(datExpr)[moduleColors == "yellowgreen"]
   MMlightcyanGenes <- names(datExpr)[moduleColors == "lightcyan"]
   MMlightsteelblue1Genes <-
     names(datExpr)[moduleColors == "lightsteelblue1"]
@@ -819,7 +726,8 @@ module = "orange"
            keytype = "SYMBOL",
            column = "ENTREZID")
   modplum1Entrez <- na.exclude(modplum1Entrez)
-  modplum1Paths <- enrichKEGG(gene = modplum1Entrez, organism = 'hsa')
+  modplum1Paths <-
+    enrichKEGG(gene = modplum1Entrez, organism = 'hsa')
   modplum1Paths <-
     as.data.frame(modplum1Paths) %>% mutate(bkgdSize = as.numeric(substring(BgRatio, regexpr("/", BgRatio) + 1))) %>% mutate(pathBkgd = as.numeric(substring(BgRatio, 1, regexpr("/", BgRatio) -
                                                                                                                                                                1))) %>% mutate(bkgdPerc = pathBkgd / bkgdSize) %>%     mutate(GeneRatTotal = as.numeric(substring(GeneRatio, regexpr("/", GeneRatio) + 1))) %>% mutate(percPath = Count /
@@ -1077,7 +985,8 @@ module = "orange"
            keytype = "SYMBOL",
            column = "ENTREZID")
   modblackEntrez <- na.exclude(modblackEntrez)
-  modblackPaths <- enrichKEGG(gene = modblackEntrez, organism = 'hsa')
+  modblackPaths <-
+    enrichKEGG(gene = modblackEntrez, organism = 'hsa')
   modblackPaths <-
     as.data.frame(modblackPaths) %>% mutate(bkgdSize = as.numeric(substring(BgRatio, regexpr("/", BgRatio) + 1))) %>% mutate(pathBkgd = as.numeric(substring(BgRatio, 1, regexpr("/", BgRatio) -
                                                                                                                                                                1))) %>% mutate(bkgdPerc = pathBkgd / bkgdSize) %>%     mutate(GeneRatTotal = as.numeric(substring(GeneRatio, regexpr("/", GeneRatio) + 1))) %>% mutate(percPath = Count /

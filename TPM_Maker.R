@@ -1,7 +1,6 @@
 # This analysis is coded by Di "Silas" Kuang
 # Email: dkuang5@wisc.edu
 # Source: https://www.biostars.org/p/171766/
-
 load("20230308_Weasley_Rsubread_fclim_RefSeqGeneAnnot.RData")
 
 counts_to_tpm <-
@@ -42,4 +41,4 @@ fcLim_featureLength <- fcLim$annotation$Length
 sequence_fragmentLength <- rep(151,36)
 
 fcLim_tpm <- counts_to_tpm(fcLim_counts, fcLim_featureLength, sequence_fragmentLength)
-write.csv(fcLim_tpm, "rsubread_GENE_tpm.csv")
+write.csv(fcLim_tpm, file = "./WGCNA/rsubread_GENE_tpm.csv")

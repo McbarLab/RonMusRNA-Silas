@@ -6,8 +6,8 @@
 .RData
 
 # Do not delete the local database
-!./
-./mmusculus_gene_ensembl.RData
+!./WGCNA/
+./WGCNA/20230308_Weasley_Rsubread_fclim_RefSeqGeneAnnot.RData
 
 # User-specific files
 .Ruserdata
