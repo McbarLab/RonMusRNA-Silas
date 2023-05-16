@@ -4,10 +4,10 @@
 
 # Session Data files
 .RData
+WGCNA/*.RData
 
 # Do not delete the local database
-!./WGCNA/
-./WGCNA/20230308_Weasley_Rsubread_fclim_RefSeqGeneAnnot.RData
+!WGCNA/20230308_Weasley_Rsubread_fclim_RefSeqGeneAnnot.RData
 
 # User-specific files
 .Ruserdata
@@ -58,8 +58,6 @@ vignettes/*.pdf
 
 # Ignore all csv files except the input
 *.csv
-!DGE/
-!Corrected_DGE/
 !Joe_DGE/
 
 # Ignore benchmark script

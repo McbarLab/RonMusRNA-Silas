@@ -1,38 +1,8 @@
-# This analysis is coded by Di "Silas" Kuang
-# Email: dkuang5@wisc.edu
-# RStudio version: 2023.03.0 Build 386
-# R version: 4.3.0
-
-#install BiocManager dependent packages
-library(BiocManager)
-if(!require("WGCNA", quietly = TRUE))
-  BiocManager::install("WGCNA")
-if(!require("GO.db", quietly = TRUE))
-  BiocManager::install("GO.db")
-if(!require("preprocessCore", quietly = TRUE))
-  BiocManager::install("preprocessCore")
-if(!require("impute", quietly = TRUE))
-  BiocManager::install("impute")
-
-
-# Load packages
-library(tidyverse)
-library(WGCNA)
-library(matrixStats)
-library(Hmisc)
-library(splines)
-library(foreach)
-library(doParallel)
-library(fastcluster)
-library(dynamicTreeCut)
-library(survival)
-
-
 # 1.a Loading expresssion data
 options(stringsAsFactors = FALSE)
-RawTPM = read.csv("rsubread_GENE_tpm.csv", check.names=FALSE)
+RawTPM = read.csv("rsubread_GENE_tpm.csv", check.names = FALSE)
 names(RawTPM)[1] <- "gene"
-datExpr = as.data.frame(t(RawTPM[, -c(1)]))
+datExpr = as.data.frame(t(RawTPM[,-c(1)]))
 names(datExpr) = RawTPM$gene
 rownames(datExpr) = names(RawTPM)[-c(1)]
 
@@ -76,11 +46,11 @@ nSamples = nrow(datExpr)
 # 1.c Loading clinical trait data
 traitData = read.csv("Weasley_Biometrics_07March2023.csv")
 
-allTraits = traitData[, -c(2:4)] #this removes these specific columns
+allTraits = traitData[,-c(2:4)] #this removes these specific columns
 
 ALLsamples = rownames(datExpr)
 traitRows = match(ALLsamples, allTraits$Animal.ID)
-datTraits = allTraits[traitRows, -1]
+datTraits = allTraits[traitRows,-1]
 rownames(datTraits) = allTraits[traitRows, 1]
 collectGarbage()
 
@@ -91,3 +61,5 @@ plotDendroAndColors(sampleTree2,
                     traitColors,
                     groupLabels = names(datTraits),
                     main = "Sample dendrogram and trait heatmap")
+
+save(datExpr, datTraits, file = "01-dataInput.RData")
