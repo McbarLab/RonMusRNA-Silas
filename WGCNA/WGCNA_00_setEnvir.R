@@ -4,14 +4,15 @@
 # RStudio version: 2023.03.0 Build 386
 # R version: 4.3.0
 
-currentwd <- "."
+workingdir <- "C:/Users/skuang/Documents/RonMusRNA-Silas/WGCNA"
 
-if (getwd() != currentwd) {
+if (getwd() != workingdir) {
   # Set the working directory to "./WGCNA/"
-  setwd("./WGCNA/")
+  setwd(workingdir)
 }
 
 currentwd <- getwd()
+options(stringsAsFactors = FALSE)
 
 #install BiocManager dependent packages
 library(BiocManager)

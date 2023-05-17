@@ -37,10 +37,10 @@ text(
 )
 
 # 2.a.2 One-step network construction and module detection
-## Setting Soft Threshold to 9
+## Setting Soft Threshold to a suitable number
 net = blockwiseModules(
   datExpr,
-  power = 9,
+  power = sft$powerEstimate,
   TOMType = "unsigned",
   minModuleSize = 30,
   reassignThreshold = 0,
@@ -48,9 +48,10 @@ net = blockwiseModules(
   numericLabels = TRUE,
   pamRespectsDendro = FALSE,
   saveTOMs = TRUE,
-  saveTOMFileBase = "AllSamples_TOM", # Change this title
+  saveTOMFileBase = "AllSamples_TOM",
   verbose = 3
 )
+
 
 ## See how many modules and genes/module
 table(net$colors)

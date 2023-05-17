@@ -1,13 +1,16 @@
+load("01-dataInput.RData")
+load("02_networkConstr.RData")
+
 # 3.a Quantifying module-trait associations
 nGenes = ncol(datExpr)
 nSamples = nrow(datExpr)
 
 MEs0 = moduleEigengenes(datExpr, moduleColors)$eigengenes
 MEs = orderMEs(MEs0)
-moduleTraitCor = cor(MEs, datTraits, use = "p")
+moduleTraitCor = WGCNA::cor(MEs, datTraits, use = "p")
 moduleTraitPvalue = corPvalueStudent(moduleTraitCor, nSamples)
 
-sizeGrWindow(10, 6)
+
 # Will display correlations and their p-values
 textMatrix = paste(signif(moduleTraitCor, 2),
                    "\n(",
@@ -16,9 +19,10 @@ textMatrix = paste(signif(moduleTraitCor, 2),
                    sep = "")
 
 dim(textMatrix) = dim(moduleTraitCor)
-par(mar = c(6, 8.5, 3, 3)) # Discuss on how parameters were determined
 
 # Display the correlation values within a heatmap plot
+pdf("Module-trait relationships.pdf", width = 20, height = 12)
+par(mar = c(6, 8.5, 3, 3))
 labeledHeatmap(
   Matrix = moduleTraitCor,
   xLabels = names(datTraits),
@@ -32,10 +36,16 @@ labeledHeatmap(
   zlim = c(-1, 1),
   main = paste("Module-trait relationships")
 )
+dev.off()
 
+feature_plot <- function(feature){
+  feature_df <- as.data.frame(datTraits$feature)
+  #names(feature_df) <- sub(".*\\$", "", as.character(feature))
+  names(feature_df) <- deparse(substitute(feature))
+  return(feature_df)
+}
 
-
-### _________________
+test_feature <- feature_plot(Fasting.Glucose.End)
 
 # Define variable weight containing the weight column of datTrait
 ## Fasting Glucose End
@@ -76,7 +86,7 @@ verboseScatterplot(
   abs(geneModuleMembership[moduleGenes, column]),
   abs(geneTraitSignificance[moduleGenes, 1]),
   xlab = paste("Module Membership in", module, "module"),
-  ylab = "Gene significance for triglycerides",
+  ylab = "Gene significance for fasting glucose end",
   main = paste("Module membership vs. gene significance\n"),
   cex.main = 1.2,
   cex.lab = 1.2,
@@ -87,7 +97,7 @@ verboseScatterplot(
 # 3.d Summary output of network analysis results
 names(datExpr)
 names(datExpr)[moduleColors == "orange"]
-annot = read.csv(file = "RawTPM_All_18288genes_AllSamples.csv")
+annot = read.csv(file = "rsubread_GENE_tpm.csv")
 
 dim(annot)
 names(annot)
@@ -104,7 +114,7 @@ geneInfo0 = data.frame(gene = probes,
                        GSPvalue)
 
 # Order modules by their significance for weight
-modOrder = order(-abs(cor(MEs, triglycerides, use = "p")))
+modOrder = order(-abs(cor(MEs, glu_end, use = "p")))
 
 # Add module membership information in the chosen order
 for (mod in 1:ncol(geneModuleMembership))
@@ -119,7 +129,7 @@ for (mod in 1:ncol(geneModuleMembership))
                                ""))
 }
 # Order the genes in the geneInfo variable first by module color, then by geneTraitSignificance
-geneOrder = order(geneInfo0$moduleColor,-abs(geneInfo0$GS.triglycerides))
+geneOrder = order(geneInfo0$moduleColor,-abs(geneInfo0$GS.glu_end))
 
 geneInfo = geneInfo0[geneOrder,]
 
@@ -128,7 +138,7 @@ geneInfo_Si = geneInfo[,-c(5:86)] #this removes these specific columns
 dim(geneInfo_Si)
 names(geneInfo_Si)
 
-write.csv(geneInfo, file = "AllSamples_All18288genes_Remove626genes_CRvsC_geneInfo_blockwise.csv")
-geneInfo_Gene_Gene = geneInfo
-geneInfo_Gene_Gene$gene = paste0(geneInfo_Gene_Gene$gene, "_")
-write.csv(geneInfo_Gene_Gene, file = "AllSamples_All18288genes_Remove626genes_CRvsC_geneInfo_blockwise.csv")
+write.csv(geneInfo, file = "geneInfo.csv")
+geneInfo_Gene = geneInfo
+geneInfo_Gene$gene = paste0(geneInfo_Gene$gene, "_")
+write.csv(geneInfo_Gene, file = "geneInfo_genes.csv")

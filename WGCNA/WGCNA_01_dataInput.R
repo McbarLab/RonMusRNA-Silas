@@ -1,7 +1,5 @@
 # 1.a Loading expresssion data
-options(stringsAsFactors = FALSE)
 RawTPM = read.csv("rsubread_GENE_tpm.csv", check.names = FALSE)
-names(RawTPM)[1] <- "gene"
 datExpr = as.data.frame(t(RawTPM[,-c(1)]))
 names(datExpr) = RawTPM$gene
 rownames(datExpr) = names(RawTPM)[-c(1)]
@@ -24,6 +22,7 @@ if (!gsg$allOK)
   # Remove the offending genes and samples from the data:
   datExpr = datExpr[gsg$goodSamples, gsg$goodGenes]
 }
+gsg$allOK
 
 ## Cluster the samples
 sampleTree = hclust(dist(datExpr), method = "average")
