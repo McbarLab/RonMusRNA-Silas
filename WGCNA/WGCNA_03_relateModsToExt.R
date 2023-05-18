@@ -1,12 +1,23 @@
+source("WGCNA_00_setEnvir.R")
 load("01-dataInput.RData")
 load("02_networkConstr.RData")
 
 # 3.a Quantifying module-trait associations
+# Define numbers of genes and samples
 nGenes = ncol(datExpr)
 nSamples = nrow(datExpr)
 
+
+
+# Recalculate MEs with color labels
 MEs0 = moduleEigengenes(datExpr, moduleColors)$eigengenes
 MEs = orderMEs(MEs0)
+
+# Retrive a list of all traits and one of all MEs
+trait_list <- names(datTraits)
+MEs_list <- names(MEs)
+
+
 moduleTraitCor = WGCNA::cor(MEs, datTraits, use = "p")
 moduleTraitPvalue = corPvalueStudent(moduleTraitCor, nSamples)
 
@@ -21,13 +32,15 @@ textMatrix = paste(signif(moduleTraitCor, 2),
 dim(textMatrix) = dim(moduleTraitCor)
 
 # Display the correlation values within a heatmap plot
-pdf("Module-trait relationships.pdf", width = 20, height = 12)
+pdf("./Module-trait relationships.pdf",
+    width = 20,
+    height = 12)
 par(mar = c(6, 8.5, 3, 3))
 labeledHeatmap(
   Matrix = moduleTraitCor,
-  xLabels = names(datTraits),
-  yLabels = names(MEs),
-  ySymbols = names(MEs),
+  xLabels = trait_list,
+  yLabels = MEs_list,
+  ySymbols = MEs_list,
   colorLabels = FALSE,
   colors = blueWhiteRed(50),
   textMatrix = textMatrix,
@@ -38,107 +51,46 @@ labeledHeatmap(
 )
 dev.off()
 
-feature_plot <- function(feature){
-  feature_df <- as.data.frame(datTraits$feature)
-  #names(feature_df) <- sub(".*\\$", "", as.character(feature))
-  names(feature_df) <- deparse(substitute(feature))
-  return(feature_df)
-}
+# Set 2 empty tables to store correlation estimates and p values
+cor_table <- data.frame(replace(moduleTraitCor, TRUE, NA))
+p_table <- cor_table
 
-test_feature <- feature_plot(Fasting.Glucose.End)
+# Extract names of all modules for iterations
+modNames = substring(MEs_list, 3)
+num_module <- length(modNames)
 
-# Define variable weight containing the weight column of datTrait
-## Fasting Glucose End
-glu_end = as.data.frame(datTraits$Fasting.Glucose.End)
-
-names(glu_end) = "glu_end"
-
-# names (colors) of the modules
-modNames = substring(names(MEs), 3)
-geneModuleMembership = as.data.frame(cor(datExpr, MEs, use = "p"))
-
-MMPvalue = as.data.frame(corPvalueStudent(as.matrix(geneModuleMembership), nSamples))
-
-names(geneModuleMembership) = paste("MM", modNames, sep = "")
-
-names(MMPvalue) = paste("p.MM", modNames, sep = "")
-
-geneTraitSignificance = as.data.frame(cor(datExpr, glu_end, use = "p"))
-
-GSPvalue = as.data.frame(corPvalueStudent(as.matrix(geneTraitSignificance), nSamples))
-
-names(geneTraitSignificance) = paste("GS.", names(glu_end), sep =
-                                       "")
-
-names(GSPvalue) = paste("p.GS.", names(glu_end), sep = "")
-
-# 3.c Intramodular analysis: identifying genes with high GS and MM
-module = "orange"
-column = match(module, modNames)
-
-moduleGenes = moduleColors == module
-
-sizeGrWindow(7, 7)
-
-par(mfrow = c(1, 1))
-
-verboseScatterplot(
-  abs(geneModuleMembership[moduleGenes, column]),
-  abs(geneTraitSignificance[moduleGenes, 1]),
-  xlab = paste("Module Membership in", module, "module"),
-  ylab = "Gene significance for fasting glucose end",
-  main = paste("Module membership vs. gene significance\n"),
-  cex.main = 1.2,
-  cex.lab = 1.2,
-  cex.axis = 1.2,
-  col = module
-)
-
-# 3.d Summary output of network analysis results
-names(datExpr)
-names(datExpr)[moduleColors == "orange"]
-annot = read.csv(file = "rsubread_GENE_tpm.csv")
-
-dim(annot)
-names(annot)
-probes = names(datExpr)
-probes2annot = match(probes, annot$gene)
-# The following is the number or probes without annotation:
-sum(is.na(probes2annot))
-# Should return 0.
-
-# Create the starting data frame
-geneInfo0 = data.frame(gene = probes,
-                       moduleColor = moduleColors,
-                       geneTraitSignificance,
-                       GSPvalue)
-
-# Order modules by their significance for weight
-modOrder = order(-abs(cor(MEs, glu_end, use = "p")))
-
-# Add module membership information in the chosen order
-for (mod in 1:ncol(geneModuleMembership))
-{
-  oldNames = names(geneInfo0)
-  geneInfo0 = data.frame(geneInfo0, geneModuleMembership[, modOrder[mod]],
-                         MMPvalue[, modOrder[mod]])
+trait_cor <- function(trait) {
+  # Define variable weight containing the weight column of datTrait
+  trait_df <- as.data.frame(datTraits[,trait])
+  names(trait_df) <- trait
   
-  names(geneInfo0) = c(oldNames,
-                       paste("MM.", modNames[modOrder[mod]], sep = ""),
-                       paste("p.MM.", modNames[modOrder[mod]], sep =
-                               ""))
+  # names (colors) of the modules
+  # modNames, MEs, datExpr, nSamples are global variables
+  
+  geneModuleMembership = as.data.frame(cor(datExpr, MEs, use = "p"))
+  MMPvalue = as.data.frame(corPvalueStudent(as.matrix(geneModuleMembership), nSamples))
+  names(geneModuleMembership) = paste("MM", modNames, sep = "")
+  names(MMPvalue) = paste("p.MM", modNames, sep = "")
+  geneTraitSignificance = as.data.frame(cor(datExpr, trait_df, use = "p"))
+  GSPvalue = as.data.frame(corPvalueStudent(as.matrix(geneTraitSignificance), nSamples))
+  names(geneTraitSignificance) = paste("GS.", names(trait_df), sep =
+                                         "")
+  names(GSPvalue) = paste("p.GS.", names(trait_df), sep = "")
+  
+  # 3.c Intramodular analysis: identifying genes with high GS and MM
+  for (i in 1:num_module) {
+    module <- modNames[i]
+    moduleGenes <- moduleColors == module
+    cor_test <- cor.test(abs(geneModuleMembership[moduleGenes, i]),
+                         abs(geneTraitSignificance[moduleGenes, 1]))
+    ME_name <- paste0("ME", module)
+    cor_table[ME_name, trait] <<- cor_test$estimate
+    p_table[ME_name, trait] <<- cor_test$p.value
+  }
 }
-# Order the genes in the geneInfo variable first by module color, then by geneTraitSignificance
-geneOrder = order(geneInfo0$moduleColor,-abs(geneInfo0$GS.glu_end))
 
-geneInfo = geneInfo0[geneOrder,]
-
-## Remove specific columns to condense data
-geneInfo_Si = geneInfo[,-c(5:86)] #this removes these specific columns
-dim(geneInfo_Si)
-names(geneInfo_Si)
-
-write.csv(geneInfo, file = "geneInfo.csv")
-geneInfo_Gene = geneInfo
-geneInfo_Gene$gene = paste0(geneInfo_Gene$gene, "_")
-write.csv(geneInfo_Gene, file = "geneInfo_genes.csv")
+# Iterate through all traits
+for (i in 1:length(trait_list)){
+  trait_cor(trait_list[i])
+  print(paste0("Correlation analysis for ", trait_list[i], " is done."))
+}
