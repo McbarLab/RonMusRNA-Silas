@@ -31,25 +31,29 @@ textMatrix = paste(signif(moduleTraitCor, 2),
 
 dim(textMatrix) = dim(moduleTraitCor)
 
+heatmap_plot <- function(matrix, title){
+  pdf(paste0("./", title,".pdf"),
+      width = 20,
+      height = 12)
+  par(mar = c(6, 8.5, 3, 3))
+  labeledHeatmap(
+    Matrix = matrix,
+    xLabels = trait_list,
+    yLabels = MEs_list,
+    ySymbols = MEs_list,
+    colorLabels = FALSE,
+    colors = blueWhiteRed(50),
+    textMatrix = textMatrix,
+    setStdMargins = FALSE,
+    cex.text = 0.5,
+    zlim = c(-1, 1),
+    main = title
+  )
+  dev.off()
+}
+
 # Display the correlation values within a heatmap plot
-pdf("./Module-trait relationships.pdf",
-    width = 20,
-    height = 12)
-par(mar = c(6, 8.5, 3, 3))
-labeledHeatmap(
-  Matrix = moduleTraitCor,
-  xLabels = trait_list,
-  yLabels = MEs_list,
-  ySymbols = MEs_list,
-  colorLabels = FALSE,
-  colors = blueWhiteRed(50),
-  textMatrix = textMatrix,
-  setStdMargins = FALSE,
-  cex.text = 0.5,
-  zlim = c(-1, 1),
-  main = paste("Module-trait relationships")
-)
-dev.off()
+heatmap_plot(moduleTraitCor, "Module-trait relationships")
 
 # Set 2 empty tables to store correlation estimates and p values
 cor_table <- data.frame(replace(moduleTraitCor, TRUE, NA))
@@ -92,5 +96,13 @@ trait_cor <- function(trait) {
 # Iterate through all traits
 for (i in 1:length(trait_list)){
   trait_cor(trait_list[i])
-  print(paste0("Correlation analysis for ", trait_list[i], " is done."))
+  print(paste0("Correlation analysis for ", trait_list[i], " is done..."))
+  if(i==length(trait_list)){
+    print("Correlation anallyses all done!")
+  }
 }
+
+heatmap_plot(cor_table, "Module_Trait_Correlation")
+
+write.csv(cor_table, "Correlation_Estimate.csv")
+write.csv(p_table, "Correlation_PValue.csv")
