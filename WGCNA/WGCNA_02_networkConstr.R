@@ -1,4 +1,7 @@
+source("WGCNA_00_setEnvir.R")
 load("01-dataInput.RData")
+
+cor <- WGCNA::cor
 
 # 2.a Automatic network construction and module detection
 powers = c(c(1:10), seq(from = 12, to = 20, by = 2))
@@ -36,11 +39,12 @@ text(
   col = "red"
 )
 
+sft_power <- sft$powerEstimate
 # 2.a.2 One-step network construction and module detection
 ## Setting Soft Threshold to a suitable number
 net = blockwiseModules(
   datExpr,
-  power = sft$powerEstimate,
+  power = sft_power,
   TOMType = "unsigned",
   minModuleSize = 30,
   reassignThreshold = 0,
@@ -73,5 +77,7 @@ MEs = net$MEs
 
 geneTree = net$dendrograms[[1]]
 
-save(MEs, moduleLabels, moduleColors, geneTree,
+save(MEs, moduleLabels, moduleColors, geneTree, sft_power,
      file = "02_networkConstr.RData")
+
+cor <- stats::cor
