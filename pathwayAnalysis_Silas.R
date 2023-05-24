@@ -37,9 +37,9 @@ import_dataset <- function(filename){
   # or DOWN-regulated
   # Take into consideration of the FDR. Do not simply look at the sign.
   curatedDGE <- curatedDGE %>% 
-    mutate(direction = case_when(FDR < 0.05 & logFC > 0 ~ "UP",
-                                 FDR < 0.05 & logFC < 0 ~ "DOWN",
-                                 FDR >= 0.05 ~ "NS")) 
+    mutate(direction = case_when(FDR < fdrCutOff & logFC > logFoldChange ~ "UP",
+                                 FDR < fdrCutOff & logFC < logFoldChange ~ "DOWN",
+                                 FDR >= fdrCutOff ~ "NS")) 
   return(curatedDGE)
 }
 

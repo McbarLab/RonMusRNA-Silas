@@ -1,4 +1,3 @@
-source("WGCNA_00_setEnvir.R")
 load("01-dataInput.RData")
 load("02_networkConstr.RData")
 
@@ -102,7 +101,13 @@ for (i in 1:length(trait_list)){
   }
 }
 
-heatmap_plot(cor_table, "Module_Trait_Correlation")
+textMatrix = paste(signif(as.matrix(cor_table), 2),
+                   "\n(",
+                   signif(as.matrix(p_table), 1),
+                   ")",
+                   sep = "")
+
+heatmap_plot(as.matrix(cor_table), "Module_Trait_Correlation")
 
 write.csv(cor_table, "Correlation_Estimate.csv")
 write.csv(p_table, "Correlation_PValue.csv")
