@@ -45,7 +45,7 @@ nSamples = nrow(datExpr)
 # 1.c Loading clinical trait data
 traitData = read.csv("Weasley_Biometrics_07March2023.csv")
 
-allTraits = traitData[,-c(2:4)] #this removes these specific columns
+allTraits = traitData[,-c(2:32)] #this removes these specific columns
 
 ALLsamples = rownames(datExpr)
 traitRows = match(ALLsamples, allTraits$Animal.ID)

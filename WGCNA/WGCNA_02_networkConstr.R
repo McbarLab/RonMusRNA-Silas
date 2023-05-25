@@ -1,4 +1,3 @@
-source("WGCNA_00_setEnvir.R")
 load("01-dataInput.RData")
 
 cor <- WGCNA::cor
