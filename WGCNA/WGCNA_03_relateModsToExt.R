@@ -51,9 +51,6 @@ heatmap_plot <- function(matrix, title){
   dev.off()
 }
 
-# Display the correlation values within a heatmap plot
-heatmap_plot(moduleTraitCor, "Module-trait relationships")
-
 # Set 2 empty tables to store correlation estimates and p values
 cor_table <- data.frame(replace(moduleTraitCor, TRUE, NA))
 p_table <- cor_table
