@@ -88,6 +88,21 @@ trait_cor <- function(trait) {
     ME_name <- paste0("ME", module)
     cor_table[ME_name, trait] <<- cor_test$estimate
     p_table[ME_name, trait] <<- cor_test$p.value
+    
+    # Plot the correlation for all combinations of modules and traits
+    pdf(paste0("./Correlation_Plot/", trait, " vs ", module, ".pdf"))
+    verboseScatterplot(
+      abs(geneModuleMembership[moduleGenes, i]),
+      abs(geneTraitSignificance[moduleGenes, 1]),
+      xlab = paste("Module Membership in", module, "module"),
+      ylab = paste0("Gene significance for ", trait),
+      main = paste("Module membership vs. gene significance\n"),
+      cex.main = 1.2,
+      cex.lab = 1.2,
+      cex.axis = 1.2,
+      col = module
+    )
+    dev.off()
   }
 }
 

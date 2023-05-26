@@ -12,7 +12,7 @@ GSPvalue = as.data.frame(corPvalueStudent(as.matrix(geneTraitSignificance), nSam
 names(geneTraitSignificance) = paste("GS.", names(Sex.M.vs.F), sep="");
 names(GSPvalue) = paste("p.GS.", names(Sex.M.vs.F), sep="");
 
-module = "brown"
+module = "mediumpurple"
 column = match(module, modNames)
 
 moduleGenes = moduleColors == module
