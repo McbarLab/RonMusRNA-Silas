@@ -1,5 +1,3 @@
-source("WGCNA_00_setEnvir.R")
-
 # 1.a Loading expresssion data
 RawTPM = read.csv("rsubread_GENE_tpm.csv", check.names = FALSE)
 datExpr = as.data.frame(t(RawTPM[,-c(1)]))
@@ -46,12 +44,16 @@ nSamples = nrow(datExpr)
 
 # 1.c Loading clinical trait data
 traitData = read.csv("Weasley_Biometrics_07March2023.csv")
-
-# Data Modification Explained:
-# Sex: Male -> 1, Female -> 0
-# Diet: C -> 0, AR -> 1
-
 allTraits = traitData[,-c(5:22)] #this removes these specific columns
+
+# Split age/group into pairwise comparisons
+allTraits <-
+  binarizeCategoricalColumns(
+    data = allTraits,
+    convertColumns = c("Sex", "Age.Group", "Diet"),
+    includePairwise = TRUE,
+    includeLevelVsAll = FALSE
+  )
 
 ALLsamples = rownames(datExpr)
 traitRows = match(ALLsamples, allTraits$Animal.ID)
