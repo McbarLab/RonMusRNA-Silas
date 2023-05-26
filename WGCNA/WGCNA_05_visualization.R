@@ -1,4 +1,5 @@
-source("WGCNA_00_setEnvir.R")
+source("WGCNA_03_relateModsToExt.R")
+
 load("01-dataInput.RData")
 load("02_networkConstr.RData")
 

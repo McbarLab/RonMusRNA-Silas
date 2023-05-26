@@ -2,6 +2,8 @@
 # Email: dkuang5@wisc.edu
 # RStudio version: 2023.03.0 Build 386
 # R version: 4.3.0
+source("WGCNA_05_visualization.R")
+
 
 load("01-dataInput.RData")
 load("02_networkConstr.RData")

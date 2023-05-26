@@ -1,3 +1,5 @@
+source("WGCNA_02_networkConstr.R")
+
 load("01-dataInput.RData")
 load("02_networkConstr.RData")
 
