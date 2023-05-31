@@ -9,6 +9,9 @@ load("01-dataInput.RData")
 load("02_networkConstr.RData")
 load("mmusculus_gene_ensembl.RData")
 
+# Set the start time
+start_time <- Sys.time()
+
 fdrCutOff = 0.05
 
 # Extract names of genes
@@ -36,7 +39,7 @@ for (j in seq_along(gene_module)) {
     keytype = "SYMBOL",
     column = "ENTREZID"
   ) %>% na.omit()
-  module_ora <- ora_result <- enrichKEGG(
+  module_ora <- enrichKEGG(
     gene = module_entrez,
     organism = "mmu",
     minGSSize = 4,
@@ -45,13 +48,42 @@ for (j in seq_along(gene_module)) {
     pAdjustMethod = "fdr"
   )
   
+  module_result <- module_ora@result
+  
   # Save the result into csv files
-  if (is.null(module_ora@result) == FALSE) {
+  if (is.null(module_result) == FALSE) {
+    # Get the gene symbols and add them to gsea_result@result
+    for (k in seq_along(module_result$geneID)) {
+      input_string = module_result$geneID[k]
+      input_ids = strsplit(input_string, "/")[[1]]
+      output_ids = "mgi_symbol"
+      
+      # Get the gene symbols
+      ora_genes = getBM(
+        attributes = c(output_ids),
+        filters = c("entrezgene_id"),
+        values = input_ids,
+        mart = ensembl_mart,
+      )
+      
+      # Collapse the gene symbols into a single string separated by backslashes
+      gene_string = paste(ora_genes$mgi_symbol, collapse = "/")
+      
+      # Assign the gene symbol to the corresponding row of gsea_result@result
+      module_result[k, "gene_symbol"] <- gene_string
+    }
     # Write the dataframe into an external csv file
     write.csv(
-      module_ora@result,
+      module_result,
       file = paste("./ORA_Pathway_csv/", module_name, " ORA.csv", sep = ""),
       row.names = TRUE
     )
   }
 }
+
+# Calculate the elapsed time
+end_time <- Sys.time()
+elapsed_time <- end_time - start_time
+
+# Print the elapsed time
+cat("Elapsed time:", format(elapsed_time, units = "mins"), "\n")

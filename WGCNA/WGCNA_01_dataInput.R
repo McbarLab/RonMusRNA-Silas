@@ -43,7 +43,10 @@ nGenes = ncol(datExpr)
 nSamples = nrow(datExpr)
 
 # 1.c Loading clinical trait data
-traitData = read.csv("Weasley_Biometrics_07March2023.csv")
+# traitData = read.csv("Weasley_Biometrics_ALL.csv")
+traitData = read.csv("Weasley_Biometrics_M.csv")
+# traitData = read.csv("Weasley_Biometrics_F.csv")
+
 allTraits = traitData[,-c(5:22)] #this removes these specific columns
 
 # Split age/group into pairwise comparisons

@@ -52,8 +52,8 @@ net = blockwiseModules(
   mergeCutHeight = 0.25,
   numericLabels = TRUE,
   pamRespectsDendro = FALSE,
-  saveTOMs = TRUE,
-  saveTOMFileBase = "AllSamples_TOM",
+  saveTOMs = FALSE,
+  # saveTOMFileBase = "AllSamples_TOM",
   verbose = 3
 )
 
