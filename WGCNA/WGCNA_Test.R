@@ -1,5 +1,144 @@
-counter <- 0
-for(i in seq_along(gene_module)){
-  counter <- counter + length(gene_module[[i]])
+source("WGCNA_02_networkConstr.R")
+
+load("01-dataInput.RData")
+load("02_networkConstr.RData")
+
+# 3.a Quantifying module-trait associations
+# Define numbers of genes and samples
+nGenes <- ncol(datExpr)
+nSamples <- nrow(datExpr)
+
+# Recalculate MEs with color labels
+MEs0 <- moduleEigengenes(datExpr, moduleColors)$eigengenes
+MEs <- orderMEs(MEs0)
+
+# Retrieve a list of all traits and one of all MEs
+trait_list <- names(datTraits)
+MEs_list <- names(MEs)
+
+moduleTraitCor <- WGCNA::cor(MEs, datTraits, use = "p")
+moduleTraitPvalue <- corPvalueStudent(moduleTraitCor, nSamples)
+
+# Will display correlations and their p-values
+textMatrix <- paste(signif(moduleTraitCor, 2),
+                    "\n(",
+                    signif(moduleTraitPvalue, 1),
+                    ")",
+                    sep = "")
+
+dim(textMatrix) <- dim(moduleTraitCor)
+
+heatmap_plot <- function(matrix, title) {
+  pdf(paste0("./", title, ".pdf"),
+      width = 20,
+      height = 12)
+  par(mar = c(6, 8.5, 3, 3))
+  labeledHeatmap(
+    Matrix = matrix,
+    xLabels = trait_list,
+    yLabels = MEs_list,
+    ySymbols = MEs_list,
+    colorLabels = FALSE,
+    colors = blueWhiteRed(50),
+    textMatrix = textMatrix,
+    setStdMargins = FALSE,
+    cex.text = 0.5,
+    zlim = c(-1, 1),
+    main = title
+  )
+  dev.off()
 }
-print(counter)
+
+# Set 2 empty tables to store correlation estimates and p-values
+cor_table <- data.frame(replace(moduleTraitCor, TRUE, NA))
+p_table <- cor_table
+
+# Extract names of all modules for iterations
+modNames <- substring(MEs_list, 3)
+num_module <- length(modNames)
+
+# Parallelize code with 4 physical cores
+library(foreach)
+library(doParallel)
+trait_cluster <- makeCluster(4)
+registerDoParallel(trait_cluster)
+
+trait_cor <- function(trait) {
+  # Define variable weight containing the weight column of datTrait
+  trait_df <- as.data.frame(datTraits[, trait])
+  names(trait_df) <- trait
+  
+  # names (colors) of the modules
+  # modNames, MEs, datExpr, nSamples are global variables
+  
+  geneModuleMembership <- as.data.frame(cor(datExpr, MEs, use = "p"))
+  MMPvalue <- as.data.frame(corPvalueStudent(as.matrix(geneModuleMembership), nSamples))
+  names(geneModuleMembership) <- paste("MM", modNames, sep = "")
+  names(MMPvalue) <- paste("p.MM", modNames, sep = "")
+  geneTraitSignificance <- as.data.frame(cor(datExpr, trait_df, use = "p"))
+  GSPvalue <- as.data.frame(corPvalueStudent(as.matrix(geneTraitSignificance), nSamples))
+  names(geneTraitSignificance) <- paste("GS.", names(trait_df), sep = "")
+  names(GSPvalue) <- paste("p.GS.", names(trait_df), sep = "")
+  
+  # 3.c Intramodular analysis: identifying genes with high GS and MM
+  result <- foreach(i = 1:num_module, .packages = "WGCNA") %dopar% {
+    module <- modNames[i]
+    moduleGenes <- moduleColors == module
+    cor_test <- stats::cor.test(
+      abs(geneModuleMembership[moduleGenes, i]),
+      abs(geneTraitSignificance[moduleGenes, 1])
+    )
+    
+    list(module = module,
+         cor_estimate = cor_test$estimate,
+         p_value = cor_test$p.value)
+  }
+  
+  # Update the corresponding values in the main session
+  for (i in seq_along(result)) {
+    module <- result[[i]]$module
+    cor_estimate <- result[[i]]$cor_estimate
+    p_value <- result[[i]]$p_value
+    ME_name <- paste0("ME", module)
+    cor_table[ME_name, trait] <- cor_estimate
+    p_table[ME_name, trait] <- p_value
+    
+    # Plot the correlation for all combinations of modules and traits
+    pdf(paste0("./Correlation_Plot/", trait, " vs ", module, ".pdf"))
+    verboseScatterplot(
+      abs(geneModuleMembership[moduleGenes, i]),
+      abs(geneTraitSignificance[moduleGenes, 1]),
+      xlab = paste("Module Membership in", module, "module"),
+      ylab = paste0("Gene significance for ", trait),
+      main = paste("Module membership vs. gene significance\n"),
+      cex.main = 1.2,
+      cex.lab = 1.2,
+      cex.axis = 1.2,
+      col = module
+    )
+    dev.off()
+  }
+}
+
+# Iterate through all traits
+foreach(j = seq_along(trait_list),
+        .packages = c("WGCNA", "foreach", "doParallel")) %dopar% {
+          trait_ <- (trait_list[j])
+          print(paste0("Correlation analysis for ", trait_list[j], " is done..."))
+          if (j == length(trait_list)) {
+            print("Correlation analyses all done!")
+          }
+        }
+
+stopCluster(trait_cluster)
+
+textMatrix <- paste(signif(as.matrix(cor_table), 2),
+                    "\n(",
+                    signif(as.matrix(p_table), 1),
+                    ")",
+                    sep = "")
+
+heatmap_plot(as.matrix(cor_table), "Module_Trait_Correlation")
+
+write.csv(cor_table, "Correlation_Estimate.csv")
+write.csv(p_table, "Correlation_PValue.csv")

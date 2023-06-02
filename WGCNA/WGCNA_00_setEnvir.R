@@ -14,6 +14,10 @@ if (getwd() != workingdir) {
 currentwd <- getwd()
 options(stringsAsFactors = FALSE)
 
+if (!require("BiocManager", quietly = TRUE))
+  install.packages("BiocManager")
+BiocManager::install(version = "3.17")
+
 #install BiocManager dependent packages
 library(BiocManager)
 if (!require("WGCNA", quietly = TRUE))

@@ -3,6 +3,9 @@ source("WGCNA_02_networkConstr.R")
 load("01-dataInput.RData")
 load("02_networkConstr.RData")
 
+# Set the start time
+start_time <- Sys.time()
+
 # 3.a Quantifying module-trait associations
 # Define numbers of genes and samples
 nGenes = ncol(datExpr)
@@ -125,3 +128,13 @@ heatmap_plot(as.matrix(cor_table), "Module_Trait_Correlation")
 
 write.csv(cor_table, "Correlation_Estimate.csv")
 write.csv(p_table, "Correlation_PValue.csv")
+
+save(modNames,
+     file = "03_relatedModsToExt.RData")
+
+# Calculate the elapsed time
+end_time <- Sys.time()
+elapsed_time <- end_time - start_time
+
+# Print the elapsed time
+cat("Elapsed time:", format(elapsed_time, units = "mins"), "\n")

@@ -11,14 +11,16 @@ sizeGrWindow(9, 5)
 par(mfrow = c(1, 2))
 cex1 = 0.9
 plot(
-  sft$fitIndices[, 1],-sign(sft$fitIndices[, 3]) * sft$fitIndices[, 2],
+  sft$fitIndices[, 1],
+  -sign(sft$fitIndices[, 3]) * sft$fitIndices[, 2],
   xlab = "Soft Threshold (power)",
   ylab = "Scale Free Topology Model Fit,signed R^2",
   type = "n",
   main = paste("Scale independence")
 )
 text(
-  sft$fitIndices[, 1],-sign(sft$fitIndices[, 3]) * sft$fitIndices[, 2],
+  sft$fitIndices[, 1],
+  -sign(sft$fitIndices[, 3]) * sft$fitIndices[, 2],
   labels = powers,
   cex = cex1,
   col = "red"
@@ -41,9 +43,10 @@ text(
 )
 
 sft_power <- sft$powerEstimate
+
 # 2.a.2 One-step network construction and module detection
-## Setting Soft Threshold to a suitable number
-net = blockwiseModules(
+
+net <- blockwiseModules(
   datExpr,
   power = sft_power,
   TOMType = "unsigned",
@@ -53,10 +56,8 @@ net = blockwiseModules(
   numericLabels = TRUE,
   pamRespectsDendro = FALSE,
   saveTOMs = FALSE,
-  # saveTOMFileBase = "AllSamples_TOM",
   verbose = 3
 )
-
 
 ## See how many modules and genes/module
 table(net$colors)

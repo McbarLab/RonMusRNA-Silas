@@ -1,8 +1,33 @@
-# 1.a Loading expresssion data
+# mode <- "Male"
+# mode <- "ALL"
+mode <- "Female"
+
+trimList <- 1:36
+maleList <- c(1:6, 13:18, 25:30)
+if (mode == "ALL") {
+} else if (mode == "Male") {
+  trimList <- maleList
+} else if (mode == "Female") {
+  trimList <- trimList[!trimList %in% maleList]
+} else{
+  stop("The mode can only be one of the following: ALL, Male, Female")
+}
+
+# 1.c Loading clinical trait data
+traitData = read.csv("Weasley_Biometrics_ALL.csv")
+allTraits = traitData[, -c(5:22)] #this removes these specific columns
+
+# Trim the data by sex
+allTraits <- allTraits[trimList, ]
+
+# 1.a Loading expression data
 RawTPM = read.csv("rsubread_GENE_tpm.csv", check.names = FALSE)
-datExpr = as.data.frame(t(RawTPM[,-c(1)]))
+datExpr = as.data.frame(t(RawTPM[, -c(1)]))
 names(datExpr) = RawTPM$gene
 rownames(datExpr) = names(RawTPM)[-c(1)]
+
+# Trim dataExpr to match dimension of traits
+datExpr <- datExpr[trimList, ]
 
 # 1.b Checking data for excessive missing values and identification of outlier microarray samples
 ## Make sure that the numbers to not contain commas in the thousands position (e.g.- 1,234=NO; 1234=YES)
@@ -42,12 +67,6 @@ plot(
 nGenes = ncol(datExpr)
 nSamples = nrow(datExpr)
 
-# 1.c Loading clinical trait data
-# traitData = read.csv("Weasley_Biometrics_ALL.csv")
-traitData = read.csv("Weasley_Biometrics_M.csv")
-# traitData = read.csv("Weasley_Biometrics_F.csv")
-
-allTraits = traitData[,-c(5:22)] #this removes these specific columns
 
 # Split age/group into pairwise comparisons
 allTraits <-
@@ -60,7 +79,7 @@ allTraits <-
 
 ALLsamples = rownames(datExpr)
 traitRows = match(ALLsamples, allTraits$Animal.ID)
-datTraits = allTraits[traitRows,-1]
+datTraits = allTraits[traitRows, -1]
 rownames(datTraits) = allTraits[traitRows, 1]
 collectGarbage()
 
