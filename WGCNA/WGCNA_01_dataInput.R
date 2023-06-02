@@ -1,6 +1,6 @@
 # mode <- "Male"
-# mode <- "ALL"
-mode <- "Female"
+mode <- "ALL"
+# mode <- "Female"
 
 trimList <- 1:36
 maleList <- c(1:6, 13:18, 25:30)
