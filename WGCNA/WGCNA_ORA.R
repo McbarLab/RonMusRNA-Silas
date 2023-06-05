@@ -30,6 +30,8 @@ for (i in seq_along(gene_list)) {
   gene_module[[module]] <- c(gene_module[[module]], gene)
 }
 
+save(gene_module,
+     file = "ORA_geneModule.RData")
 
 # Parallelize code with 4 physical cores, which is all i7-6700 has
 ora_cluster <- makeCluster(4)
@@ -94,8 +96,6 @@ foreach(
 
 stopCluster(ora_cluster)
 
-save(gene_module,
-     file = "ORA_geneModule.RData")
 
 
 # Calculate the elapsed time
