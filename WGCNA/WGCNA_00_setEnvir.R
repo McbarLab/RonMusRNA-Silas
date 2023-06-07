@@ -35,6 +35,7 @@ if(!require("biomaRt", quietly = TRUE))
   BiocManager::install("biomaRt")
 
 
+
 # Load packages
 library(tidyverse)
 library(WGCNA)
@@ -53,3 +54,4 @@ library(AnnotationDbi)
 library(biomaRt)
 library(foreach)
 library(doParallel)
+library(gplots)

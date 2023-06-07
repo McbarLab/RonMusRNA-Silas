@@ -3,8 +3,11 @@ mode <- "ALL"
 # mode <- "Female"
 
 trimList <- 1:36
+AR_list <-
+  c(4:6, 10:12, 14, 16, 18, 20, 22, 24, 26, 28, 30, 31, 33, 36)
 maleList <- c(1:6, 13:18, 25:30)
 if (mode == "ALL") {
+  trimList <- trimList
 } else if (mode == "Male") {
   trimList <- maleList
 } else if (mode == "Female") {
@@ -91,4 +94,4 @@ plotDendroAndColors(sampleTree2,
                     groupLabels = names(datTraits),
                     main = "Sample dendrogram and trait heatmap")
 
-save(datExpr, datTraits, file = "01-dataInput.RData")
+save(mode, AR_list, datExpr, datTraits, file = "01-dataInput.RData")

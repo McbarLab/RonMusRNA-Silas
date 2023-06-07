@@ -44,6 +44,7 @@ text(
 
 sft_power <- sft$powerEstimate
 
+
 # 2.a.2 One-step network construction and module detection
 
 net <- blockwiseModules(

@@ -56,13 +56,19 @@ heatmap_plot <- function(matrix, title){
   dev.off()
 }
 
-# Set 2 empty tables to store correlation estimates and p values
-cor_table <- data.frame(replace(moduleTraitCor, TRUE, NA))
-p_table <- cor_table
+heatmap_plot(moduleTraitCor,"Module-trait relationships")
 
 # Extract names of all modules for iterations
 modNames = substring(MEs_list, 3)
 num_module <- length(modNames)
+
+save(modNames,
+     file = "03_relatedModsToExt.RData")
+
+geneModuleMembership = as.data.frame(cor(datExpr, MEs, use = "p"))
+MMPvalue = as.data.frame(corPvalueStudent(as.matrix(geneModuleMembership), nSamples))
+names(geneModuleMembership) = paste("MM", modNames, sep = "")
+names(MMPvalue) = paste("p.MM", modNames, sep = "")
 
 trait_cor <- function(trait) {
   # Define variable weight containing the weight column of datTrait
@@ -72,10 +78,7 @@ trait_cor <- function(trait) {
   # names (colors) of the modules
   # modNames, MEs, datExpr, nSamples are global variables
   
-  geneModuleMembership = as.data.frame(cor(datExpr, MEs, use = "p"))
-  MMPvalue = as.data.frame(corPvalueStudent(as.matrix(geneModuleMembership), nSamples))
-  names(geneModuleMembership) = paste("MM", modNames, sep = "")
-  names(MMPvalue) = paste("p.MM", modNames, sep = "")
+  
   geneTraitSignificance = as.data.frame(cor(datExpr, trait_df, use = "p"))
   GSPvalue = as.data.frame(corPvalueStudent(as.matrix(geneTraitSignificance), nSamples))
   names(geneTraitSignificance) = paste("GS.", names(trait_df), sep =
@@ -89,8 +92,6 @@ trait_cor <- function(trait) {
     cor_test <- cor.test(abs(geneModuleMembership[moduleGenes, i]),
                          abs(geneTraitSignificance[moduleGenes, 1]))
     ME_name <- paste0("ME", module)
-    cor_table[ME_name, trait] <<- cor_test$estimate
-    p_table[ME_name, trait] <<- cor_test$p.value
     
     # Plot the correlation for all combinations of modules and traits
     pdf(paste0("./Correlation_Plot/", trait, " vs ", module, ".pdf"))
@@ -124,13 +125,6 @@ textMatrix = paste(signif(as.matrix(cor_table), 2),
                    ")",
                    sep = "")
 
-heatmap_plot(as.matrix(cor_table), "Module_Trait_Correlation")
-
-write.csv(cor_table, "Correlation_Estimate.csv")
-write.csv(p_table, "Correlation_PValue.csv")
-
-save(modNames,
-     file = "03_relatedModsToExt.RData")
 
 # Calculate the elapsed time
 end_time <- Sys.time()
