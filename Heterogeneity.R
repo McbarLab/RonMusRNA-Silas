@@ -228,5 +228,7 @@ CV_Change <- function(df) {
   return(change)
 }
 
-CV_FC_ABS <- CV_Change(CV_F_C)
-CV_MC_ABS <- CV_Change(CV_M_C)
+CV_FC_ABS <- CV_Change(CV_F_C) %>%
+  filter(GENE %in% gene_list)
+CV_MC_ABS <- CV_Change(CV_M_C) %>%
+  filter(GENE %in% gene_list)
