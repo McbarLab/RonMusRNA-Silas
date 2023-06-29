@@ -65,7 +65,7 @@ num_module <- length(modNames)
 save(modNames,
      file = "03_relatedModsToExt.RData")
 
-geneModuleMembership = as.data.frame(cor(datExpr, MEs, use = "p"))
+geneModuleMembership = as.data.frame(WGCNA::cor(datExpr, MEs, use = "p"))
 MMPvalue = as.data.frame(corPvalueStudent(as.matrix(geneModuleMembership), nSamples))
 names(geneModuleMembership) = paste("MM", modNames, sep = "")
 names(MMPvalue) = paste("p.MM", modNames, sep = "")
@@ -89,8 +89,6 @@ trait_cor <- function(trait) {
   for (i in 1:num_module) {
     module <- modNames[i]
     moduleGenes <- moduleColors == module
-    cor_test <- cor.test(abs(geneModuleMembership[moduleGenes, i]),
-                         abs(geneTraitSignificance[moduleGenes, 1]))
     ME_name <- paste0("ME", module)
     
     # Plot the correlation for all combinations of modules and traits
@@ -118,12 +116,6 @@ for (i in 1:length(trait_list)){
     print("Correlation anallyses all done!")
   }
 }
-
-textMatrix = paste(signif(as.matrix(cor_table), 2),
-                   "\n(",
-                   signif(as.matrix(p_table), 1),
-                   ")",
-                   sep = "")
 
 
 # Calculate the elapsed time

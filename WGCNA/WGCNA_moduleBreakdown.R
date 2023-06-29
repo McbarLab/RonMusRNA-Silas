@@ -26,6 +26,7 @@ for (i in seq_along(module_interest)) {
   #         col = colorRampPalette(c("blue", "white", "red"))(100),
   #         Colv = NA)
   par(mar = c(1, 1, 1, 1))
+  dev.new(noRStudioGD = TRUE)
   heatmap.2(x = sorted_breakdown,
             Colv=FALSE, 
             dendrogram="row",
@@ -36,4 +37,5 @@ for (i in seq_along(module_interest)) {
             labRow=FALSE,
             key = TRUE
             )
+  dev.off()
 }

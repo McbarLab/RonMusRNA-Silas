@@ -1,11 +1,9 @@
-module <- module_interest[1]
-module_genes <- gene_module[[module]]
-module_breakdown <-
-  tpm_table[rownames(tpm_table) %in% module_genes, , drop = FALSE]
-normalized_breakdown <-
-  scale(module_breakdown, center = TRUE, scale = TRUE)
-distance_matrix <- dist(normalized_breakdown, method = "euclidean")
-hclust_result <- hclust(distance_matrix)
-sorted_breakdown <- normalized_breakdown[hclust_result$order, ]
+trait <- "Sex.M.vs.F"
+trait_df <- as.data.frame(datTraits[,trait])
+names(trait_df) <- trait
 
-heatmap(sorted_breakdown, col = colorRampPalette(c("blue", "white", "red"))(100), Colv = NA)
+# names (colors) of the modules
+# modNames, MEs, datExpr, nSamples are global variables
+
+
+geneTraitSignificance = as.data.frame(cor(datExpr, trait_df, use = "p"))
