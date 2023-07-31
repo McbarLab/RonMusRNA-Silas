@@ -211,7 +211,7 @@ CV_F_C <- curated_06FC %>%
 
 CV_M_C <- curated_06MC %>%
   left_join(curated_22MC, by = "GENE") %>%
-  left_join(curated_28MC, by = "GENE") %>%
+  left_join(curated_28MC, by = "GENE") %>% 
   na.omit()
 
 # Compute the absolute change of CV along lifespan
