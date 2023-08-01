@@ -1,84 +1,99 @@
 load("Consensus-dataInput.RData")
+# Choose a set of soft-thresholding powers
+powers = c(seq(4, 10, by = 1), seq(12, 20, by = 2))
 
-cor <- WGCNA::cor
+# Initialize a list to hold the results of scale-free analysis
+powerTables = vector(mode = "list", length = nSets)
 
-# 2.a Automatic network construction and module detection
-powers = c(c(1:10), seq(from = 12, to = 20, by = 2))
-sft = pickSoftThreshold(datExpr, powerVector = powers, verbose = 5)
-sizeGrWindow(9, 5)
-par(mfrow = c(1, 2))
-cex1 = 0.9
-plot(
-  sft$fitIndices[, 1],
-  -sign(sft$fitIndices[, 3]) * sft$fitIndices[, 2],
-  xlab = "Soft Threshold (power)",
-  ylab = "Scale Free Topology Model Fit,signed R^2",
-  type = "n",
-  main = paste("Scale independence")
-)
-text(
-  sft$fitIndices[, 1],
-  -sign(sft$fitIndices[, 3]) * sft$fitIndices[, 2],
-  labels = powers,
-  cex = cex1,
-  col = "red"
-)
-abline(h = 0.90, col = "red")
-plot(
-  sft$fitIndices[, 1],
-  sft$fitIndices[, 5],
-  xlab = "Soft Threshold (power)",
-  ylab = "Mean Connectivity",
-  type = "n",
-  main = paste("Mean connectivity")
-)
-text(
-  sft$fitIndices[, 1],
-  sft$fitIndices[, 5],
-  labels = powers,
-  cex = cex1,
-  col = "red"
+# Call the network topology analysis function for each set in turn
+for (set in 1:nSets)
+  powerTables[[set]] = list(data = pickSoftThreshold(
+    multiExpr[[set]]$data,
+    powerVector = powers,
+    verbose = 2,
+    # networkType = "signed",
+    # blockSize = 11366
+  )[[2]])
+collectGarbage()
+
+# Plot the results:
+colors = c("black", "red")
+# Will plot these columns of the returned scale free analysis tables
+plotCols = c(2, 5, 6, 7)
+colNames = c(
+  "Scale Free Topology Model Fit",
+  "Mean connectivity",
+  "Median connectivity",
+  "Max connectivity"
 )
 
-sft_power <- sft$powerEstimate
+# Get the minima and maxima of the plotted points
+ylim = matrix(NA, nrow = 2, ncol = 4)
 
+for (set in 1:nSets)
+{
+  for (col in 1:length(plotCols))
+  {
+    ylim[1, col] = min(ylim[1, col], powerTables[[set]]$data[, plotCols[col]], na.rm = TRUE)
+    
+    ylim[2, col] = max(ylim[2, col], powerTables[[set]]$data[, plotCols[col]], na.rm = TRUE)
+    
+  }
+}
+# Plot the quantities in the chosen columns vs. the soft thresholding power
+pdf(file = "SoftPower.pdf", width = 12, height = 12)
 
-# 2.a.2 One-step network construction and module detection
+par(mfcol = c(2, 2))
 
-net <- blockwiseModules(
-  datExpr,
-  power = sft_power,
-  TOMType = "unsigned",
-  minModuleSize = 30,
-  reassignThreshold = 0,
-  mergeCutHeight = 0.25,
-  numericLabels = TRUE,
+par(mar = c(4.2, 4.2 , 2.2, 0.5))
+cex1 = 0.7
+
+for (col in 1:length(plotCols)) for (set in 1:nSets)
+{
+  if (set==1)
+  {
+    plot(powerTables[[set]]$data[,1], -sign(powerTables[[set]]$data[,3])*powerTables[[set]]$data[,2],
+         xlab="Soft Threshold (power)",ylab=colNames[col],type="n", ylim = ylim[, col],
+         main = colNames[col]);
+    addGrid()
+  }
+  if (col==1)
+  {
+    text(powerTables[[set]]$data[,1], -sign(powerTables[[set]]$data[,3])*powerTables[[set]]$data[,2],
+         labels=powers,cex=cex1,col=colors[set])
+  } else
+    text(powerTables[[set]]$data[,1], powerTables[[set]]$data[,plotCols[col]],
+         labels=powers,cex=cex1,col=colors[set])
+  if (col==1)
+  {
+    legend("bottomright", legend = setLabels, col = colors, pch = 20) 
+  } else
+    legend("topright", legend = setLabels, col = colors, pch = 20) 
+}
+dev.off()
+
+net = blockwiseConsensusModules(
+  multiExpr, power = 6, minModuleSize = 60, deepSplit = 2,
   pamRespectsDendro = FALSE,
-  saveTOMs = FALSE,
-  verbose = 3
-)
+  mergeCutHeight = 0.25, numericLabels = TRUE,
+  minKMEtoStay = 0,
+  # maxBlockSize = 11366,
+  # networkType = "signed",
+  saveTOMs = FALSE, verbose = 5)
 
-## See how many modules and genes/module
-table(net$colors)
-
-sizeGrWindow(12, 9)
-mergedColors = labels2colors(net$colors)
-plotDendroAndColors(
-  net$dendrograms[[1]],
-  mergedColors[net$blockGenes[[1]]],
-  "Module colors",
-  dendroLabels = FALSE,
-  hang = 0.03,
-  addGuide = TRUE,
-  guideHang = 0.05
-)
+consMEs = net$multiMEs
 moduleLabels = net$colors
-moduleColors = labels2colors(net$colors)
-MEs = net$MEs
+# Convert the numeric labels to color labels
+moduleColors = labels2colors(moduleLabels)
+consTree = net$dendrograms[[1]]
 
-geneTree = net$dendrograms[[1]]
+sizeGrWindow(8,6)
+pdf(file = "ConsensusDendrogram-auto.pdf", wi = 8, he = 6)
+plotDendroAndColors(consTree, moduleColors,
+                    "Module colors",
+                    dendroLabels = FALSE, hang = 0.03,
+                    addGuide = TRUE, guideHang = 0.05,
+                    main = "Consensus gene dendrogram and module colors")
+dev.off()
 
-save(MEs, moduleLabels, moduleColors, geneTree, sft_power,
-     file = "02_networkConstr.RData")
-
-cor <- stats::cor
+save(consMEs, moduleLabels, moduleColors, consTree, file = "Consensus-NetworkConstruction-auto.RData")
