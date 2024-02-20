@@ -15,19 +15,18 @@ femData <- RawTPM[,c(1,femList)]
 nSets = 2
 
 # For easier labeling of plots, create a vector holding descriptive names of the two sets.
-setLabels = c("Male", "Female")
-shortLabels = c("Male", "Female")
+setLabels = c("Female", "Male")
+shortLabels = c("Female", "Male")
 
 # Form multi-set expression data: columns starting from 9 contain actual expression data.
 multiExpr = vector(mode = "list", length = nSets)
 
-multiExpr[[1]] = list(data = as.data.frame(t(maleData[-c(1)])))
-names(multiExpr[[1]]$data) = maleData$gene
-rownames(multiExpr[[1]]$data) = names(maleData)[-c(1)]
-multiExpr[[2]] = list(data = as.data.frame(t(femData[-c(1)])))
-names(multiExpr[[2]]$data) = femData$gene
-rownames(multiExpr[[2]]$data) = names(femData)[-c(1)]
-
+multiExpr[[1]] = list(data = as.data.frame(t(femData[-c(1)])))
+names(multiExpr[[1]]$data) = femData$gene
+rownames(multiExpr[[1]]$data) = names(femData)[-c(1)]
+multiExpr[[2]] = list(data = as.data.frame(t(maleData[-c(1)])))
+names(multiExpr[[2]]$data) = maleData$gene
+rownames(multiExpr[[2]]$data) = names(maleData)[-c(1)]
 
 # Check that the data has the correct format for many functions operating on multiple sets:
 exprSize = checkSets(multiExpr)

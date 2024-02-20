@@ -11,8 +11,8 @@ for (set in 1:nSets)
     multiExpr[[set]]$data,
     powerVector = powers,
     verbose = 2,
-    # networkType = "signed",
-    # blockSize = 11366
+    networkType = "signed",
+    blockSize = 11366
   )[[2]])
 collectGarbage()
 
@@ -73,12 +73,12 @@ for (col in 1:length(plotCols)) for (set in 1:nSets)
 dev.off()
 
 net = blockwiseConsensusModules(
-  multiExpr, power = 6, minModuleSize = 60, deepSplit = 2,
+  multiExpr, power = 16, minModuleSize = 60, deepSplit = 2,
   pamRespectsDendro = FALSE,
   mergeCutHeight = 0.25, numericLabels = TRUE,
   minKMEtoStay = 0,
-  # maxBlockSize = 11366,
-  # networkType = "signed",
+  maxBlockSize = 11366,
+  networkType = "signed",
   saveTOMs = FALSE, verbose = 5)
 
 consMEs = net$multiMEs
@@ -96,4 +96,4 @@ plotDendroAndColors(consTree, moduleColors,
                     main = "Consensus gene dendrogram and module colors")
 dev.off()
 
-save(consMEs, moduleLabels, moduleColors, consTree, file = "Consensus-NetworkConstruction-auto.RData")
+save(consMEs, moduleLabels, moduleColors, file = "Consensus-NetworkConstruction-auto.RData")

@@ -22,7 +22,12 @@ library(org.Mm.eg.db)
 library(EnhancedVolcano)
 library(AnnotationDbi)
 library(biomaRt)
+library(foreach)
+library(doParallel)
 
+# Parallelize the whole script
+pathway_cluster <- makeCluster(detectCores())
+registerDoParallel(pathway_cluster)
 
 # Local database is used to ensure pathway does not change due to updates
 emsembl_mart <- load("mmusculus_gene_ensembl.RData")
@@ -216,7 +221,8 @@ GSEA_plot <- function(curatedDGE, title){
                          organism = "mmu",
                          minGSSize = 4, 
                          maxGSSize = 500, 
-                         pvalueCutoff = 0.05, 
+                         # Save all pathways, don't filter
+                         pvalueCutoff = 1, 
                          pAdjustMethod = "fdr",
                          keyType = "ncbi-geneid",
                          verbose = TRUE)
@@ -243,6 +249,14 @@ GSEA_plot <- function(curatedDGE, title){
       
       # Assign the gene symbol to the corresponding row of gsea_result@result
       gsea_result@result[i, "gene_symbol"] <- gene_string
+      
+      gsea_result@result$Description <-
+        gsub(
+          pattern = " - Mus musculus (house mouse)",
+          replacement = "",
+          gsea_result@result$Description,
+          fixed = T
+        )
     }
     
     # Write the dataframe into an external csv file
@@ -250,14 +264,14 @@ GSEA_plot <- function(curatedDGE, title){
               file = paste("GSEA_Pathway_csv/", title," gseaKEGG_all.csv",sep=""),
               row.names = FALSE)
     
+    gsea_filtered <- gsea_result %>% filter(p.adjust < 0.05)
     
-    gsea_dotplot <- dotplot(gsea_result, 
-                            showCategory = 10,
-                            title = paste(title,"gseaKEGG_top10",sep=" "), 
+    gsea_dotplot <- dotplot(gsea_filtered,
+                            title = paste(title,"gseaKEGG_significiant",sep=" "), 
                             split = ".sign") + facet_grid(.~.sign)
     
     ggsave(path = "./GSEA_Pathways",
-           filename = paste(title,"gseaKEGG_top10.pdf",sep=" "), 
+           filename = paste(title,"gseaKEGG_sig.pdf",sep=" "), 
            gsea_dotplot)
   }
 }
@@ -265,21 +279,36 @@ GSEA_plot <- function(curatedDGE, title){
 # Write all DGE spreadsheet names into a list
 DGE_folder_name <- "Joe_DGE"
 DGE_list <- list.files(path = paste("./",DGE_folder_name,sep = ""))
-DGE_count <- length(DGE_list)
 
 # What is the log2 fold change we need?
 logFoldChange = log2(1.5)
 fdrCutOff = 0.01
 
-# Iterate through all files to generate their figures in 1 click
-for(DGE_index in 1:DGE_count){
+foreach(
+  i = seq_along(DGE_list),
+  .packages = c(
+    "org.Mm.eg.db",
+    "clusterProfiler",
+    "biomaRt",
+    "doParallel",
+    "readr",
+    "tidyverse",
+    "ggplot2",
+    "AnnotationDbi"
+  )
+) %dopar% {
+  # What is the log2 fold change we need?
+  logFoldChange = log2(1.5)
+  fdrCutOff = 0.01
   title <- sub(".csv*.","",
-                        sub(".*GENE_","",DGE_list[DGE_index]))
-  curatedDGE <- import_dataset(paste(DGE_folder_name, DGE_list[DGE_index],sep="/"))
-  category_plot(curatedDGE, title)
-  volcano_plot(curatedDGE, title)
-  sig_gene_list <- sig_gene(curatedDGE, title)
+               sub(".*GENE_","",DGE_list[i]))
+  curatedDGE <- import_dataset(paste(DGE_folder_name, DGE_list[i],sep="/"))
+  # category_plot(curatedDGE, title)
+  # volcano_plot(curatedDGE, title)
+  # sig_gene_list <- sig_gene(curatedDGE, title)
   #allPaths <- path_generate(curatedDGE, title)
   #ORA_plot(allPaths, title)
-  #GSEA_plot(curatedDGE, title)
+  GSEA_plot(curatedDGE, title)
 }
+
+stopCluster(pathway_cluster)
